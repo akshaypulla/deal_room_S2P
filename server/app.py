@@ -52,7 +52,7 @@ class DealRoomSessionPool:
         if _base not in sys.path:
             sys.path.insert(0, _base)
 
-        from deal_room import DealRoomV3S2P
+        from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 
         with self._lock:
             self._prune_locked()
