@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from deal_room.environment.dealroom_v3 import DealRoomV3
-from deal_room.training.grpo_trainer import HeuristicPolicyAdapter, RandomPolicyAdapter
+from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
+from deal_room_S2P.training.grpo_trainer import HeuristicPolicyAdapter, RandomPolicyAdapter
 from models import DealRoomAction
 
 
@@ -37,7 +37,7 @@ def run_episodes(task_id: str, agent_class, n: int = 50) -> list[float]:
     for i in range(n):
         rng = np.random.default_rng(i)
         agent = agent_class(rng) if agent_class == RandomAgent else agent_class()
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=i, task_id=task_id)
         total_reward = 0.0
         for _ in range(20):

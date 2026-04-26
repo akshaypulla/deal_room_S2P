@@ -14,7 +14,7 @@ from typing import Dict, List, Optional, Set, Tuple
 import numpy as np
 
 from .causal_graph import BeliefDistribution, propagate_beliefs
-from deal_room.environment.llm_client import generate_deliberation_summary
+from deal_room_S2P.environment.llm_client import generate_deliberation_summary
 
 
 DELIBERATION_STEPS = {

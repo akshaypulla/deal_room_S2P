@@ -7,12 +7,12 @@ Shows that rewards improve over episodes as Q-values converge.
 import sys
 import numpy as np
 
-sys.path.insert(0, "/Users/akshaypulla/Documents/deal_room")
+sys.path.insert(0, "/Users/akshaypulla/Documents/deal_room_S2P")
 
-from deal_room.environment.dealroom_v3 import DealRoomV3
+from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 
 
-def make_policy(env: DealRoomV3, lr: float = 0.2, eps: float = 0.4):
+def make_policy(env: DealRoomV3S2P, lr: float = 0.2, eps: float = 0.4):
     class QPolicy:
         def __init__(pself):
             pself.env = env
@@ -40,7 +40,7 @@ def make_policy(env: DealRoomV3, lr: float = 0.2, eps: float = 0.4):
 
 
 def run_session(task_id: str, n_episodes: int = 25):
-    env = DealRoomV3()
+    env = DealRoomV3S2P()
     rewards = []
     q_history = []
 

@@ -5,13 +5,13 @@ Tests for rewards/utterance_scorer.py - Five-dimensional world-state scoring.
 import numpy as np
 import pytest
 
-from deal_room.committee.causal_graph import (
+from deal_room_S2P.committee.causal_graph import (
     BeliefDistribution,
     CausalGraph,
 )
 from models import DealRoomAction
-from deal_room.environment.dealroom_v3 import StateSnapshot, REWARD_WEIGHTS
-from deal_room.rewards.utterance_scorer import (
+from deal_room_S2P.environment.dealroom_v3 import StateSnapshot, REWARD_WEIGHTS
+from deal_room_S2P.rewards.utterance_scorer import (
     LOOKAHEAD_COST,
     UtteranceScore,
     UtteranceScorer,

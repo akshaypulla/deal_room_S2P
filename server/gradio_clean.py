@@ -144,7 +144,7 @@ def load_metadata() -> EnvironmentMetadata:
     readme_path = Path("README.md")
     readme = readme_path.read_text(encoding="utf-8") if readme_path.exists() else None
     return EnvironmentMetadata(
-        name="deal-room",
+        name="deal_room_s2p",
         description="A realistic multi-stakeholder enterprise negotiation environment.",
         version="1.0.0",
         author="akshaypulla",

@@ -18,11 +18,11 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from deal_room.committee.causal_graph import (
+from deal_room_S2P.committee.causal_graph import (
     BeliefDistribution,
     get_betweenness_centrality,
 )
-from deal_room.stakeholders.cvar_preferences import (
+from deal_room_S2P.stakeholders.cvar_preferences import (
     StakeholderRiskProfile,
     compute_cvar,
     compute_outcome_distribution,

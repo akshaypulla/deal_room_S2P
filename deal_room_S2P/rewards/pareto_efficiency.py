@@ -11,7 +11,7 @@ Decision 7 Terminal Reward Table:
 
 from typing import Dict, List, Tuple
 
-from deal_room.environment.constants import TERMINAL_REWARDS, TERMINAL_REWARDS_V2
+from deal_room_S2P.environment.constants import TERMINAL_REWARDS, TERMINAL_REWARDS_V2
 
 
 def check_pareto_optimality(

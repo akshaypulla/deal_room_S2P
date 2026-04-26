@@ -36,9 +36,9 @@ try:
 except ImportError:
     UNSLOTH_AVAILABLE = False
 
-from deal_room.environment.dealroom_v3 import DealRoomV3
-from deal_room.environment.text_env import DealRoomTextEnv
-from deal_room.environment.prompts import build_situation_prompt, parse_action_text
+from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
+from deal_room_S2P.environment.text_env import DealRoomTextEnv
+from deal_room_S2P.environment.prompts import build_situation_prompt, parse_action_text
 
 
 # Well-known good seeds for demo stability

@@ -13,35 +13,35 @@ from pathlib import Path
 def _find_project_root() -> Path:
     current_file = Path(__file__).resolve()
     for candidate in (current_file.parent, *current_file.parents):
-        if (candidate / "deal_room" / "training").exists():
+        if (candidate / "deal_room_S2P" / "training").exists():
             return candidate
-    if Path("/app/env/deal_room/training").exists():
+    if Path("/app/env/deal_room_S2P/training").exists():
         return Path("/app/env")
     return current_file.parent
 
 
 _LOCAL_ROOT = _find_project_root()
-_LOCAL_PACKAGE = _LOCAL_ROOT / "deal_room"
-if (_LOCAL_ROOT / "deal_room" / "training").exists():
+_LOCAL_PACKAGE = _LOCAL_ROOT / "deal_room_S2P"
+if (_LOCAL_ROOT / "deal_room_S2P" / "training").exists():
     sys.path.insert(0, str(_LOCAL_ROOT))
-if Path("/app/env/deal_room/training").exists():
+if Path("/app/env/deal_room_S2P/training").exists():
     sys.path.insert(0, "/app/env")
 
-_loaded_deal_room = sys.modules.get("deal_room")
-if _loaded_deal_room is not None:
-    module_file = str(getattr(_loaded_deal_room, "__file__", ""))
+_loaded_deal_room_s2p = sys.modules.get("deal_room_S2P")
+if _loaded_deal_room_s2p is not None:
+    module_file = str(getattr(_loaded_deal_room_s2p, "__file__", ""))
     valid_roots = [str(_LOCAL_ROOT), "/app/env"]
     if not any(module_file.startswith(root) for root in valid_roots):
         for module_name in list(sys.modules):
-            if module_name == "deal_room" or module_name.startswith("deal_room."):
+            if module_name == "deal_room_S2P" or module_name.startswith("deal_room_S2P."):
                 sys.modules.pop(module_name, None)
 
 
 def _ensure_training_package_visible():
     """Make pytest namespace-package imports see the canonical repo package."""
-    import deal_room
+    import deal_room_S2P
 
-    package_paths = getattr(deal_room, "__path__", None)
+    package_paths = getattr(deal_room_S2P, "__path__", None)
     if package_paths is not None and (_LOCAL_PACKAGE / "training").exists():
         local_package_path = str(_LOCAL_PACKAGE)
         if local_package_path not in list(package_paths):
@@ -50,7 +50,7 @@ def _ensure_training_package_visible():
 
 def _load_training_symbols():
     _ensure_training_package_visible()
-    from deal_room.training.grpo_trainer import (
+    from deal_room_S2P.training.grpo_trainer import (
         DealRoomGRPOTrainer,
         GRPOTrainer,
         RandomPolicyAdapter,
@@ -93,9 +93,9 @@ def test_training_actually_improves():
     )
 
     # Sanity check the convenience policy method returns a real action.
-    from deal_room.environment.dealroom_v3 import DealRoomV3
+    from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 
-    env = DealRoomV3()
+    env = DealRoomV3S2P()
     obs = env.reset(seed=999, task_id="aligned")
     action = trainer.policy(obs)
     assert action.action_type and action.target_ids, "Trainer policy returned invalid action"

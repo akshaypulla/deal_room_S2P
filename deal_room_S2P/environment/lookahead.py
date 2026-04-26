@@ -7,7 +7,7 @@ from typing import Dict, List
 
 import numpy as np
 
-from deal_room.rewards.utterance_scorer import LOOKAHEAD_COST
+from deal_room_S2P.rewards.utterance_scorer import LOOKAHEAD_COST
 
 
 @dataclass

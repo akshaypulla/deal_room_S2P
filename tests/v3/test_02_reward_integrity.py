@@ -32,7 +32,7 @@ if _dotenv.exists():
 
 import requests
 
-from deal_room.rewards.utterance_scorer import LOOKAHEAD_COST
+from deal_room_S2P.rewards.utterance_scorer import LOOKAHEAD_COST
 
 BASE_URL = os.getenv("DEALROOM_BASE_URL", "http://127.0.0.1:7860")
 REWARD_VARIANCE_MIN_SPREAD = 0.05

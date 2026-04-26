@@ -36,9 +36,9 @@ MIN_ECHO_RECALL_RATE = 0.65
 
 def test_6_1_weak_signals_field_exists():
     print("\n[6.1] weak_signals field exists...")
-    from deal_room.environment.dealroom_v3 import DealRoomV3
+    from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 
-    env = DealRoomV3()
+    env = DealRoomV3S2P()
     obs = env.reset(task_id="aligned")
     assert hasattr(obs, "weak_signals"), "weak_signals missing from observation"
     print("  ✓ weak_signals field exists")
@@ -46,9 +46,9 @@ def test_6_1_weak_signals_field_exists():
 
 def test_6_2_cross_stakeholder_echoes_exists():
     print("\n[6.2] cross_stakeholder_echoes field exists...")
-    from deal_room.environment.dealroom_v3 import DealRoomV3
+    from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 
-    env = DealRoomV3()
+    env = DealRoomV3S2P()
     obs = env.reset(task_id="aligned")
     assert hasattr(obs, "cross_stakeholder_echoes"), "cross_stakeholder_echoes missing"
     print("  ✓ cross_stakeholder_echoes field exists")
@@ -56,9 +56,9 @@ def test_6_2_cross_stakeholder_echoes_exists():
 
 def test_6_3_echo_structure():
     print("\n[6.3] Echo structure: list of dicts with from/to/content...")
-    from deal_room.environment.dealroom_v3 import DealRoomV3
+    from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 
-    env = DealRoomV3()
+    env = DealRoomV3S2P()
     obs = env.reset(task_id="aligned")
 
     action = DealRoomAction(
@@ -88,9 +88,9 @@ def test_6_3_echo_structure():
 
 def test_6_4_weak_signals_populated_after_action():
     print("\n[6.4] Weak signals populated after step...")
-    from deal_room.environment.dealroom_v3 import DealRoomV3
+    from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 
-    env = DealRoomV3()
+    env = DealRoomV3S2P()
     obs = env.reset(task_id="conflicted")
 
     action = DealRoomAction(
@@ -113,13 +113,13 @@ def test_6_4_weak_signals_populated_after_action():
 
 def test_6_5_echo_firing_rate_nonzero():
     print("\n[6.5] Echo firing rate meets 70% design target tolerance...")
-    from deal_room.environment.dealroom_v3 import DealRoomV3
+    from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 
     fired = 0
     n = 40
 
     for i in range(n):
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(task_id="conflicted", seed=100 + i)
 
         action = DealRoomAction(
@@ -147,15 +147,15 @@ def test_6_5_echo_firing_rate_nonzero():
 
 def test_6_6_weak_signal_threshold_respected():
     print("\n[6.6] Weak signal probability threshold respected...")
-    from deal_room.environment.dealroom_v3 import OBS_CONFIG
+    from deal_room_S2P.environment.dealroom_v3 import OBS_CONFIG
 
     assert OBS_CONFIG is not None, "OBS_CONFIG not initialized"
     threshold = OBS_CONFIG.weak_signal_hard_threshold
     print(f"  Hard threshold = {threshold}")
 
-    from deal_room.environment.dealroom_v3 import DealRoomV3
+    from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 
-    env = DealRoomV3()
+    env = DealRoomV3S2P()
     obs = env.reset(task_id="conflicted")
 
     action = DealRoomAction(
@@ -185,7 +185,7 @@ def test_6_6_weak_signal_threshold_respected():
 
 def test_6_7_echo_recall_probability_configured():
     print("\n[6.7] echo_recall_probability is configured (default 0.70)...")
-    from deal_room.environment.dealroom_v3 import OBS_CONFIG
+    from deal_room_S2P.environment.dealroom_v3 import OBS_CONFIG
 
     prob = OBS_CONFIG.echo_recall_probability if OBS_CONFIG else None
     assert prob is not None, "echo_recall_probability not set"

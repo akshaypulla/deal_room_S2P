@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
-from deal_room.environment.dealroom_v3 import STANDARD_STAKEHOLDERS
+from deal_room_S2P.environment.dealroom_v3 import STANDARD_STAKEHOLDERS
 from models import DealRoomAction, DealRoomObservation, DealRoomState
 
 app = FastAPI(title="DealRoom", version="1.0.0")
@@ -52,14 +52,14 @@ class DealRoomSessionPool:
         if _base not in sys.path:
             sys.path.insert(0, _base)
 
-        from deal_room import DealRoomV3
+        from deal_room import DealRoomV3S2P
 
         with self._lock:
             self._prune_locked()
             resolved_session_id = session_id or self._new_session_id()
             entry = self._sessions.get(resolved_session_id)
             if entry is None:
-                entry = SessionEntry(env=DealRoomV3(), last_access=time.time())
+                entry = SessionEntry(env=DealRoomV3S2P(), last_access=time.time())
                 self._sessions[resolved_session_id] = entry
             obs = entry.env.reset(seed=seed, task_id=task_id)
             entry.last_access = time.time()
@@ -249,7 +249,7 @@ def _normalize_http_action(action: DealRoomAction) -> DealRoomAction:
 async def health():
     return {
         "status": "ok",
-        "service": "deal-room",
+        "service": "deal_room_s2p",
         "tasks": ["aligned", "conflicted", "hostile_acquisition"],
     }
 
@@ -257,7 +257,7 @@ async def health():
 @app.get("/metadata")
 async def metadata():
     return {
-        "name": "deal-room",
+        "name": "deal_room_s2p",
         "version": "1.0.0",
         "tasks": ["aligned", "conflicted", "hostile_acquisition"],
     }

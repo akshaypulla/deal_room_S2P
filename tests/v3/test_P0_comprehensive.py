@@ -62,7 +62,7 @@ def test_P0_1a_baseline_vs_trained_comparison():
     _path = "/app/env" if Path("/app/env").exists() else str(PROJECT_ROOT)
     if _path not in sys.path:
         sys.path.insert(0, _path)
-    from deal_room.training.grpo_trainer import (
+    from deal_room_S2P.training.grpo_trainer import (
         GRPOTrainer,
         RandomPolicyAdapter,
         HeuristicPolicyAdapter,
@@ -121,7 +121,7 @@ def test_P0_1b_multi_episode_improvement():
     _path = "/app/env" if Path("/app/env").exists() else str(PROJECT_ROOT)
     if _path not in sys.path:
         sys.path.insert(0, _path)
-    from deal_room.training.grpo_trainer import GRPOTrainer, HeuristicPolicyAdapter
+    from deal_room_S2P.training.grpo_trainer import GRPOTrainer, HeuristicPolicyAdapter
 
     adapter = HeuristicPolicyAdapter()
     trainer = GRPOTrainer(
@@ -156,7 +156,7 @@ def test_P0_1c_dimension_wise_improvement():
     _path = "/app/env" if Path("/app/env").exists() else str(PROJECT_ROOT)
     if _path not in sys.path:
         sys.path.insert(0, _path)
-    from deal_room.training.grpo_trainer import GRPOTrainer, RandomPolicyAdapter
+    from deal_room_S2P.training.grpo_trainer import GRPOTrainer, RandomPolicyAdapter
 
     trainer = GRPOTrainer(seed=999, checkpoint_dir="/tmp/p0_dimensions")
 
@@ -208,7 +208,7 @@ def test_P0_1d_policy_persistence():
     _path = "/app/env" if Path("/app/env").exists() else str(PROJECT_ROOT)
     if _path not in sys.path:
         sys.path.insert(0, _path)
-    from deal_room.training.grpo_trainer import GRPOTrainer, HeuristicPolicyAdapter
+    from deal_room_S2P.training.grpo_trainer import GRPOTrainer, HeuristicPolicyAdapter
 
     adapter = HeuristicPolicyAdapter()
     trainer = GRPOTrainer(
@@ -251,7 +251,7 @@ def test_P0_2a_cvar_deterministic_calculation():
     _path = "/app/env" if Path("/app/env").exists() else str(PROJECT_ROOT)
     if _path not in sys.path:
         sys.path.insert(0, _path)
-    from deal_room.stakeholders.cvar_preferences import compute_cvar
+    from deal_room_S2P.stakeholders.cvar_preferences import compute_cvar
 
     outcomes = np.array([0.8, 0.6, 0.4, 0.2, 0.1, 0.9, 0.7, 0.5, 0.3, 0.0])
     alpha = 0.4
@@ -338,11 +338,11 @@ def test_P0_2c_cvar_per_stakeholder():
     _path = "/app/env" if Path("/app/env").exists() else str(PROJECT_ROOT)
     if _path not in sys.path:
         sys.path.insert(0, _path)
-    from deal_room.stakeholders.cvar_preferences import (
+    from deal_room_S2P.stakeholders.cvar_preferences import (
         compute_outcome_distribution,
         compute_cvar,
     )
-    from deal_room.stakeholders.archetypes import ARCHETYPE_PROFILES, get_archetype
+    from deal_room_S2P.stakeholders.archetypes import ARCHETYPE_PROFILES, get_archetype
 
     rng = np.random.default_rng(42)
 
@@ -533,7 +533,7 @@ def test_P0_3c_lookahead_cost_exactly_007():
     _path = "/app/env" if Path("/app/env").exists() else str(PROJECT_ROOT)
     if _path not in sys.path:
         sys.path.insert(0, _path)
-    from deal_room.rewards.utterance_scorer import LOOKAHEAD_COST
+    from deal_room_S2P.rewards.utterance_scorer import LOOKAHEAD_COST
 
     assert LOOKAHEAD_COST == 0.07, (
         f"LOOKAHEAD_COST should be 0.07, got {LOOKAHEAD_COST}"
@@ -655,11 +655,11 @@ def test_P0_4b_cvar_breakdown_per_stakeholder():
     _path = "/app/env" if Path("/app/env").exists() else str(PROJECT_ROOT)
     if _path not in sys.path:
         sys.path.insert(0, _path)
-    from deal_room.stakeholders.cvar_preferences import (
+    from deal_room_S2P.stakeholders.cvar_preferences import (
         compute_outcome_distribution,
         compute_cvar,
     )
-    from deal_room.stakeholders.archetypes import get_archetype
+    from deal_room_S2P.stakeholders.archetypes import get_archetype
 
     rng = np.random.default_rng(42)
 

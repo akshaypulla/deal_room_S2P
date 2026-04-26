@@ -9,19 +9,19 @@ import sys
 sys.path.insert(0, "/app/env")
 
 import numpy as np
-from deal_room.rewards.utterance_scorer import (
+from deal_room_S2P.rewards.utterance_scorer import (
     UtteranceScorer,
     UtteranceScore,
     compute_prediction_accuracy,
     LOG2_6,
     LOOKAHEAD_COST,
 )
-from deal_room.committee.causal_graph import (
+from deal_room_S2P.committee.causal_graph import (
     BeliefDistribution,
     CausalGraph,
     get_betweenness_centrality,
 )
-from deal_room.stakeholders.cvar_preferences import StakeholderRiskProfile
+from deal_room_S2P.stakeholders.cvar_preferences import StakeholderRiskProfile
 from models import DealRoomAction
 
 

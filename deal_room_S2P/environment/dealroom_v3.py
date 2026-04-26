@@ -1,5 +1,5 @@
 """
-DealRoomV3 environment for DealRoom v3 - OpenEnv wrapper with causal graph inference.
+DealRoomV3S2P environment for DealRoom v3 - OpenEnv wrapper with causal graph inference.
 """
 
 import hashlib
@@ -185,7 +185,7 @@ class ScenarioConfig:
     seed: Optional[int] = None
 
 
-class DealRoomV3:
+class DealRoomV3S2P:
     def __init__(self, use_llm_stakeholders: bool = False):
         global OBS_CONFIG
         OBS_CONFIG = _init_obs_config()

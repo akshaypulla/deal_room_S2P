@@ -10,15 +10,15 @@ import sys
 import time
 import numpy as np
 
-sys.path.insert(0, "/Users/akshaypulla/Documents/deal_room")
+sys.path.insert(0, "/Users/akshaypulla/Documents/deal_room_S2P")
 
-from deal_room.environment.dealroom_v3 import DealRoomV3
+from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 
 
 class RandomPolicy:
     """Random action selection from the environment's action space."""
 
-    def __init__(self, env: DealRoomV3):
+    def __init__(self, env: DealRoomV3S2P):
         self.env = env
         self.action_space = env.action_space
 
@@ -34,7 +34,7 @@ class RandomPolicy:
 class HeuristicPolicy:
     """Heuristic policy that sends targeted documents to build alignment."""
 
-    def __init__(self, env: DealRoomV3):
+    def __init__(self, env: DealRoomV3S2P):
         self.env = env
         self.step = 0
 
@@ -66,7 +66,7 @@ class HeuristicPolicy:
 
 
 def run_episode(
-    env: DealRoomV3,
+    env: DealRoomV3S2P,
     policy,
     task_id: str = "aligned",
     seed: int = None,
@@ -101,7 +101,7 @@ def run_episode(
 
 
 def run_trials(
-    policy_class, env: DealRoomV3, n_trials: int = 5, task_id: str = "aligned"
+    policy_class, env: DealRoomV3S2P, n_trials: int = 5, task_id: str = "aligned"
 ):
     """Run multiple trials and collect statistics."""
     results = []
@@ -143,7 +143,7 @@ def main():
     print("LEARNABILITY TEST: Random vs Heuristic Policy")
     print("=" * 60)
 
-    env = DealRoomV3()
+    env = DealRoomV3S2P()
 
     # Test 1: Aligned scenario
     print("\n### Aligned Scenario ###")

@@ -20,9 +20,9 @@ import torch
 import torch.nn.functional as F
 from torch.optim import AdamW
 
-from deal_room.curriculum.adaptive_generator import AdaptiveCurriculumGenerator
-from deal_room.environment.constants import REWARD_WEIGHTS, STEP_PENALTY, TERMINAL_REWARDS_V2
-from deal_room.environment.dealroom_v3 import DealRoomV3
+from deal_room_S2P.curriculum.adaptive_generator import AdaptiveCurriculumGenerator
+from deal_room_S2P.environment.constants import REWARD_WEIGHTS, STEP_PENALTY, TERMINAL_REWARDS_V2
+from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 from models import DealRoomAction, DealRoomObservation, LookaheadRequest
 
 
@@ -157,7 +157,7 @@ class SimplePPOTrainer:
 
     def collect_trajectory(
         self,
-        env: DealRoomV3,
+        env: DealRoomV3S2P,
         max_steps: int = 10,
         task_id: Optional[str] = None,
         seed: Optional[int] = None,

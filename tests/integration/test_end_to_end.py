@@ -7,7 +7,7 @@ These tests verify the complete episode flow: reset -> steps -> terminal state.
 import numpy as np
 import pytest
 
-from deal_room.environment.dealroom_v3 import DealRoomV3
+from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 from models import DealRoomAction, DealRoomObservation, LookaheadRequest
 
 
@@ -16,7 +16,7 @@ class TestFullEpisode:
 
     def test_full_episode_runs_without_crash(self):
         """Run a complete 5-step episode: reset + 5 steps + check terminal state."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
 
         obs = env.reset(seed=42, task_id="aligned")
         assert isinstance(obs, DealRoomObservation)
@@ -36,7 +36,7 @@ class TestFullEpisode:
 
     def test_reward_vector_all_five_dimensions(self):
         """StepResult reward should have 5 dimensions accessible."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
 
         obs = env.reset(seed=42, task_id="aligned")
 
@@ -53,7 +53,7 @@ class TestFullEpisode:
 
     def test_environment_reset_produces_valid_observation(self):
         """reset() produces a valid observation with all required fields."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
 
         obs = env.reset(seed=42, task_id="aligned")
 
@@ -69,7 +69,7 @@ class TestVetoHandling:
 
     def test_veto_flag_possible(self):
         """Veto can be triggered during episode."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
 
         obs = env.reset(seed=42, task_id="hostile_acquisition")
 
@@ -93,7 +93,7 @@ class TestLookaheadAction:
 
     def test_lookahead_action_does_not_advance_state(self):
         """An action with lookahead should not advance round_number."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs0 = env.reset(seed=42, task_id="aligned")
 
         action = DealRoomAction(
@@ -114,10 +114,10 @@ class TestLookaheadAction:
 
     def test_lookahead_reduces_goal_score(self):
         """Same action with and without lookahead should differ by exactly 0.07 on r^goal."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
 
         # Without lookahead
-        env1 = DealRoomV3()
+        env1 = DealRoomV3S2P()
         obs1 = env1.reset(seed=42, task_id="aligned")
         action = DealRoomAction(
             action_type="direct_message",
@@ -127,7 +127,7 @@ class TestLookaheadAction:
         _, reward_without, _, _ = env1.step(action)
 
         # With lookahead
-        env2 = DealRoomV3()
+        env2 = DealRoomV3S2P()
         obs2 = env2.reset(seed=42, task_id="aligned")
         action_with_lookahead = DealRoomAction(
             action_type="direct_message",
@@ -147,7 +147,7 @@ class TestMultipleScenarios:
 
     def test_aligned_scenario_runs(self):
         """Aligned scenario completes without errors."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="aligned")
 
         for i in range(10):
@@ -164,7 +164,7 @@ class TestMultipleScenarios:
 
     def test_conflicted_scenario_runs(self):
         """Conflicted scenario completes without errors."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="conflicted")
 
         for i in range(10):
@@ -181,7 +181,7 @@ class TestMultipleScenarios:
 
     def test_hostile_acquisition_scenario_runs(self):
         """Hostile acquisition scenario completes without errors."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="hostile_acquisition")
 
         for i in range(10):
@@ -202,7 +202,7 @@ class TestActionTypes:
 
     def test_send_document_action(self):
         """send_document action type works."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="aligned")
 
         action = DealRoomAction(
@@ -217,7 +217,7 @@ class TestActionTypes:
 
     def test_multiple_targets(self):
         """Action with multiple targets processes correctly."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="aligned")
 
         action = DealRoomAction(
@@ -235,7 +235,7 @@ class TestRewardIntegrity:
 
     def test_reward_non_negative(self):
         """Reward should be non-negative for reasonable actions."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="aligned")
 
         for i in range(5):
@@ -251,7 +251,7 @@ class TestRewardIntegrity:
 
     def test_info_dict_contains_debug_info(self):
         """info dict should contain deliberation information."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="aligned")
 
         action = DealRoomAction(

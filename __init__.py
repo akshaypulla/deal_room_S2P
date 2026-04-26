@@ -6,13 +6,13 @@
 
 """Deal Room Environment."""
 
-from deal_room.environment.dealroom_v3 import DealRoomV3
-from models import DealRoomAction, DealRoomObservation, DealRoomReward, DealRoomState
+from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
+from deal_room_S2P.models import DealRoomAction, DealRoomObservation, DealRoomReward, DealRoomState
 
-DealRoomEnvironment = DealRoomV3
+DealRoomEnvironment = DealRoomV3S2P
 
 __all__ = [
-    "DealRoomV3",
+    "DealRoomV3S2P",
     "DealRoomEnvironment",
     "DealRoomAction",
     "DealRoomObservation",

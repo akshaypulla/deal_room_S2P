@@ -59,7 +59,7 @@ def _get_llm_model_and_tokenizer():
 def _build_llm_action_from_observation(
     observation: Dict[str, Any], model, tokenizer
 ) -> DealRoomAction:
-    from deal_room.environment.prompts import build_situation_prompt, parse_action_text
+    from deal_room_S2P.environment.prompts import build_situation_prompt, parse_action_text
 
     obs_obj = DealRoomObservation(**observation)
     prompt = build_situation_prompt(obs_obj)
@@ -746,7 +746,7 @@ def load_metadata() -> EnvironmentMetadata:
     readme_path = Path("README.md")
     readme = readme_path.read_text(encoding="utf-8") if readme_path.exists() else None
     return EnvironmentMetadata(
-        name="deal-room",
+        name="deal_room_s2p",
         description="A realistic multi-stakeholder enterprise negotiation environment.",
         version="1.0.0",
         author="akshaypulla",

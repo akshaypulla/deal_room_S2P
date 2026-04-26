@@ -97,8 +97,8 @@ def p3():
     import sys
 
     sys.path.insert(0, "/app/env")
-    from deal_room.stakeholders.cvar_preferences import evaluate_deal
-    from deal_room.stakeholders.archetypes import get_archetype
+    from deal_room_S2P.stakeholders.cvar_preferences import evaluate_deal
+    from deal_room_S2P.stakeholders.archetypes import get_archetype
     import numpy as np
 
     legal = get_archetype("Legal")
@@ -376,8 +376,8 @@ def p12():
     import sys
 
     sys.path.insert(0, "/app/env")
-    from deal_room.training.grpo_trainer import GRPOTrainer
-    from deal_room.curriculum.adaptive_generator import AdaptiveCurriculumGenerator
+    from deal_room_S2P.training.grpo_trainer import GRPOTrainer
+    from deal_room_S2P.curriculum.adaptive_generator import AdaptiveCurriculumGenerator
 
     assert GRPOTrainer is not None
     assert AdaptiveCurriculumGenerator is not None

@@ -44,7 +44,7 @@ STANDARD_H = {
 
 def test_7_1_propagation_direction():
     print("\n[7.1] Propagation follows graph edge direction...")
-    from deal_room.committee.causal_graph import (
+    from deal_room_S2P.committee.causal_graph import (
         CausalGraph,
         propagate_beliefs,
         create_neutral_beliefs,
@@ -74,7 +74,7 @@ def test_7_1_propagation_direction():
 
 def test_7_2_signal_carries_through_edge():
     print("\n[7.2] Signal carries from A to B through edge...")
-    from deal_room.committee.causal_graph import (
+    from deal_room_S2P.committee.causal_graph import (
         CausalGraph,
         propagate_beliefs,
         create_neutral_beliefs,
@@ -108,7 +108,7 @@ def test_7_2_signal_carries_through_edge():
 
 def test_7_3_damping_prevents_runaway():
     print("\n[7.3] Damping prevents runaway amplification...")
-    from deal_room.committee.causal_graph import (
+    from deal_room_S2P.committee.causal_graph import (
         CausalGraph,
         propagate_beliefs,
         create_neutral_beliefs,
@@ -137,7 +137,7 @@ def test_7_3_damping_prevents_runaway():
 
 def test_7_4_beliefs_normalized_after_propagation():
     print("\n[7.4] All beliefs normalized after propagation...")
-    from deal_room.committee.causal_graph import (
+    from deal_room_S2P.committee.causal_graph import (
         sample_graph,
         propagate_beliefs,
         create_neutral_beliefs,
@@ -159,7 +159,7 @@ def test_7_4_beliefs_normalized_after_propagation():
 
 def test_7_5_no_self_loops():
     print("\n[7.5] No self-loops in any scenario type...")
-    from deal_room.committee.causal_graph import sample_graph
+    from deal_room_S2P.committee.causal_graph import sample_graph
 
     for scenario in ["aligned", "conflicted", "hostile_acquisition"]:
         g = sample_graph(STANDARD_5, STANDARD_H, scenario, np.random.default_rng())
@@ -172,7 +172,7 @@ def test_7_5_no_self_loops():
 
 def test_7_6_exec_sponsor_outgoing_authority():
     print("\n[7.6] ExecSponsor has outgoing edges (authority invariant)...")
-    from deal_room.committee.causal_graph import sample_graph
+    from deal_room_S2P.committee.causal_graph import sample_graph
 
     for scenario in ["aligned", "conflicted", "hostile_acquisition"]:
         for seed in range(10):
@@ -189,7 +189,7 @@ def test_7_6_exec_sponsor_outgoing_authority():
 
 def test_7_7_hub_centrality_beats_leaf():
     print("\n[7.7] Hub node has highest betweenness centrality...")
-    from deal_room.committee.causal_graph import CausalGraph, get_betweenness_centrality
+    from deal_room_S2P.committee.causal_graph import CausalGraph, get_betweenness_centrality
 
     edges = {("Hub", l): 0.8 for l in ["A", "B", "C", "D"]}
     g = CausalGraph(
@@ -214,7 +214,7 @@ def test_7_7_hub_centrality_beats_leaf():
 
 def test_7_8_graph_identifiability():
     print("\n[7.8] Graph identifiability — all graphs produce unique signatures...")
-    from deal_room.committee.causal_graph import (
+    from deal_room_S2P.committee.causal_graph import (
         sample_graph,
         compute_behavioral_signature,
     )
@@ -252,7 +252,7 @@ def test_7_8_graph_identifiability():
 
 def test_7_9_hub_node_has_higher_centrality_impact():
     print("\n[7.9] Hub node has higher behavioral impact than leaf...")
-    from deal_room.committee.causal_graph import (
+    from deal_room_S2P.committee.causal_graph import (
         compute_behavioral_signature,
         get_betweenness_centrality,
         sample_graph,

@@ -13,13 +13,13 @@ These tests verify the five observable signals and the key invariants:
 import numpy as np
 import pytest
 
-from deal_room.committee.causal_graph import (
+from deal_room_S2P.committee.causal_graph import (
     CausalGraph,
     create_neutral_beliefs,
     propagate_beliefs,
     sample_graph,
 )
-from deal_room.environment.dealroom_v3 import DealRoomV3
+from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 from models import DealRoomAction
 
 
@@ -38,7 +38,7 @@ class TestGNeverInObservation:
 
     def test_g_never_in_observation(self):
         """DealRoomObservation must not have a 'graph' or 'causal_graph' attribute."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="aligned")
 
         # Check top-level attributes
@@ -50,7 +50,7 @@ class TestGNeverInObservation:
 
     def test_g_not_in_string_fields(self):
         """No G information embedded in any string field."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="aligned")
 
         # Check all string fields for G-related patterns
@@ -72,7 +72,7 @@ class TestEngagementMechanism:
 
     def test_engagement_history_length(self):
         """engagement_history must have exactly 5 values per stakeholder after step 1."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs0 = env.reset(seed=42, task_id="aligned")
 
         # Create an action
@@ -96,7 +96,7 @@ class TestEngagementMechanism:
 
     def test_engagement_not_cancellable(self):
         """Agent cannot recover true delta by subtracting consecutive engagement_levels."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs0 = env.reset(seed=42, task_id="aligned")
 
         # Two steps targeting the same stakeholder
@@ -130,7 +130,7 @@ class TestEngagementMechanism:
 
     def test_reset_clears_all_state(self):
         """After reset(), engagement accumulators and history must be re-initialized."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
 
         # First episode
         obs1 = env.reset(seed=42, task_id="aligned")
@@ -151,8 +151,8 @@ class TestEngagementMechanism:
 
     def test_episode_seed_reproducibility(self):
         """Same episode_seed must produce identical observation sequences."""
-        env1 = DealRoomV3()
-        env2 = DealRoomV3()
+        env1 = DealRoomV3S2P()
+        env2 = DealRoomV3S2P()
 
         obs1a = env1.reset(seed=42, task_id="aligned")
         obs2a = env2.reset(seed=42, task_id="aligned")
@@ -166,7 +166,7 @@ class TestWeakSignals:
 
     def test_weak_signal_structure(self):
         """weak_signals is a dict mapping stakeholder to list of signal strings."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="aligned")
 
         assert hasattr(obs, "weak_signals")
@@ -179,7 +179,7 @@ class TestWeakSignals:
 
     def test_weak_signals_after_action(self):
         """weak_signals should be non-empty after taking actions."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs0 = env.reset(seed=42, task_id="aligned")
 
         action = DealRoomAction(
@@ -200,7 +200,7 @@ class TestCrossStakeholderEchoes:
 
     def test_cross_echoes_structure(self):
         """cross_stakeholder_echoes is a list of {from, to, content} dicts."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="aligned")
 
         action = DealRoomAction(
@@ -227,7 +227,7 @@ class TestCrossStakeholderEchoes:
         total_targeted = 0
 
         for seed in range(100):
-            env = DealRoomV3()
+            env = DealRoomV3S2P()
             env.reset(seed=seed, task_id="aligned")
 
             action = DealRoomAction(
@@ -260,7 +260,7 @@ class TestVetoPrecursors:
 
     def test_veto_precursors_structure(self):
         """veto_precursors is a dict mapping stakeholder to warning string."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="aligned")
 
         assert hasattr(obs, "veto_precursors")
@@ -273,11 +273,11 @@ class TestVetoPrecursors:
 
     def test_veto_precursors_dont_expose_tau(self):
         """veto_precursors should not contain numeric tau values."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
 
         # Run many episodes with different seeds
         for seed in range(20):
-            env = DealRoomV3()
+            env = DealRoomV3S2P()
             obs = env.reset(seed=seed, task_id="hostile_acquisition")
 
             action = DealRoomAction(
@@ -299,7 +299,7 @@ class TestObservationSignals:
 
     def test_all_five_signals_present(self):
         """All five observable signals are present in observation."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="aligned")
 
         # Signal 1: stakeholder_messages
@@ -319,7 +319,7 @@ class TestObservationSignals:
 
     def test_observation_schema_complete(self):
         """Observation has all required fields from DealRoomObservation."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs = env.reset(seed=42, task_id="aligned")
 
         required_fields = [
@@ -347,7 +347,7 @@ class TestObservationSignals:
 
     def test_stakeholder_messages_after_targeted_action(self):
         """stakeholder_messages should be populated after targeted action."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs0 = env.reset(seed=42, task_id="aligned")
 
         action = DealRoomAction(
@@ -371,7 +371,7 @@ class TestObservationNoise:
 
     def test_engagement_delta_noise_present(self):
         """engagement_level_delta contains noise (not exact true delta)."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs0 = env.reset(seed=42, task_id="aligned")
 
         # Take action
@@ -394,7 +394,7 @@ class TestObservationContent:
 
     def test_round_number_increments(self):
         """round_number increments after each step."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         obs0 = env.reset(seed=42, task_id="aligned")
         assert obs0.round_number == 0
 
@@ -412,7 +412,7 @@ class TestObservationContent:
 
     def test_done_flag_after_max_rounds(self):
         """done flag becomes True after max_rounds."""
-        env = DealRoomV3()
+        env = DealRoomV3S2P()
         env.reset(seed=42, task_id="aligned")
 
         for i in range(10):

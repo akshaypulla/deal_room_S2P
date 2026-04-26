@@ -1,7 +1,7 @@
 """
 DealRoom v3 — TRL-Compatible Text Environment Wrapper.
 
-Wraps DealRoomV3 as a text-in/text-out RL environment compatible with
+Wraps DealRoomV3S2P as a text-in/text-out RL environment compatible with
 TRL's GRPOTrainer reward_function interface.
 
 Usage with TRL GRPOTrainer:
@@ -16,14 +16,14 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
-from deal_room.environment.dealroom_v3 import DealRoomV3
-from deal_room.environment.prompts import build_situation_prompt, parse_action_text
+from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
+from deal_room_S2P.environment.prompts import build_situation_prompt, parse_action_text
 from models import DealRoomAction, DealRoomObservation
 
 
 class DealRoomTextEnv:
     """
-    TRL-compatible text-in/text-out wrapper for DealRoomV3.
+    TRL-compatible text-in/text-out wrapper for DealRoomV3S2P.
 
     Key design:
     - reset() returns the initial situation prompt for an episode
@@ -45,7 +45,7 @@ class DealRoomTextEnv:
         self.task_id = task_id
         self.seed = seed
         self.use_llm_stakeholders = use_llm_stakeholders
-        self.env: Optional[DealRoomV3] = None
+        self.env: Optional[DealRoomV3S2P] = None
         self._initialized = False
         self.current_obs: Optional[DealRoomObservation] = None
         self._step_count: int = 0
@@ -53,7 +53,7 @@ class DealRoomTextEnv:
 
     def reset(self) -> str:
         """Reset environment and return initial situation prompt."""
-        self.env = DealRoomV3(use_llm_stakeholders=self.use_llm_stakeholders)
+        self.env = DealRoomV3S2P(use_llm_stakeholders=self.use_llm_stakeholders)
         self.current_obs = self.env.reset(seed=self.seed, task_id=self.task_id)
         self._step_count = 0
         self._episode_reward = 0.0

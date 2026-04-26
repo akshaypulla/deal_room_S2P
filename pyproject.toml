@@ -9,7 +9,7 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "openenv-deal_room"
+name = "openenv-deal_room_s2p"
 version = "0.1.0"
 description = "Deal Room environment for OpenEnv"
 requires-python = ">=3.10"
@@ -43,4 +43,4 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["deal_room*", "server*"]
+include = ["deal_room_S2P*", "server*"]

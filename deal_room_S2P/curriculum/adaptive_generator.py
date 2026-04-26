@@ -13,7 +13,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from deal_room.environment.constants import STAGE_GATE_THETA_COMP, STAGE_GATE_WINDOW_M
+from deal_room_S2P.environment.constants import STAGE_GATE_THETA_COMP, STAGE_GATE_WINDOW_M
 
 
 @dataclass

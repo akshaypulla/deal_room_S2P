@@ -26,7 +26,7 @@ def _use_llm() -> bool:
 
 def _call_gpt4o_mini(prompt: str, timeout: float = 30.0) -> Optional[str]:
     """Call GPT-4o-mini via llm_call_text for stats tracking. Returns None on failure."""
-    from deal_room.environment.llm_client import llm_call_text
+    from deal_room_S2P.environment.llm_client import llm_call_text
 
     result = llm_call_text(
         prompt=prompt,

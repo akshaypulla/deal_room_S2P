@@ -5,7 +5,7 @@ Tests for committee/causal_graph.py - CausalGraph, belief propagation, and ident
 import numpy as np
 import pytest
 
-from deal_room.committee.causal_graph import (
+from deal_room_S2P.committee.causal_graph import (
     CausalGraph,
     BeliefDistribution,
     FUNCTIONAL_CLUSTERS,
@@ -187,7 +187,7 @@ class TestPropagation:
         beliefs_after = create_neutral_beliefs(["A", "B", "C"])
 
         # Apply positive delta to A (targeted)
-        from deal_room.committee.causal_graph import apply_positive_delta
+        from deal_room_S2P.committee.causal_graph import apply_positive_delta
 
         beliefs_after["A"] = apply_positive_delta(beliefs_before["A"], 0.4)
 

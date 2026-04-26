@@ -9,9 +9,9 @@ from typing import Any, Callable, Dict, List, Optional, Protocol, Sequence
 
 import numpy as np
 
-from deal_room.curriculum.adaptive_generator import AdaptiveCurriculumGenerator
-from deal_room.environment.constants import REWARD_WEIGHTS
-from deal_room.environment.dealroom_v3 import DealRoomV3
+from deal_room_S2P.curriculum.adaptive_generator import AdaptiveCurriculumGenerator
+from deal_room_S2P.environment.constants import REWARD_WEIGHTS
+from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 from models import DealRoomAction, DealRoomObservation, LookaheadRequest
 
 
@@ -324,7 +324,7 @@ class GRPOTrainer:
         checkpoint_dir: str = "artifacts/training",
         seed: int = 42,
         model: Optional[str] = None,
-        env: Optional[DealRoomV3] = None,
+        env: Optional[DealRoomV3S2P] = None,
         config: Optional[Dict[str, Any]] = None,
     ):
         if model is not None:
@@ -360,14 +360,14 @@ class GRPOTrainer:
 
     def run_self_play_episode(
         self,
-        env: Optional[DealRoomV3] = None,
+        env: Optional[DealRoomV3S2P] = None,
         policy_fn: Optional[Callable[[DealRoomObservation], DealRoomAction]] = None,
         policy_adapter: Optional[PolicyAdapter] = None,
         max_steps: int = 10,
         task_id: Optional[str] = None,
         seed: Optional[int] = None,
     ) -> EpisodeTrajectory:
-        env = env or DealRoomV3()
+        env = env or DealRoomV3S2P()
         adapter = policy_adapter or self.policy_adapter
         if policy_fn is not None:
             adapter = ModelPolicyAdapter(policy_fn, name="callable_policy")
@@ -490,7 +490,7 @@ class GRPOTrainer:
 
     def run_training_loop(
         self,
-        env_factory: Callable[[], DealRoomV3] = DealRoomV3,
+        env_factory: Callable[[], DealRoomV3S2P] = DealRoomV3S2P,
         n_episodes: int = 50,
         episodes_per_batch: int = 4,
         max_steps: int = 10,
@@ -540,7 +540,7 @@ class GRPOTrainer:
     ) -> List[TrainingMetrics]:
         batches = max(1, int(np.ceil(n_episodes / max(episodes_per_batch, 1))))
         return self.run_training_loop(
-            env_factory=(lambda: self.env or DealRoomV3()),
+            env_factory=(lambda: self.env or DealRoomV3S2P()),
             n_episodes=batches,
             episodes_per_batch=episodes_per_batch,
             max_steps=max_steps,
@@ -557,7 +557,7 @@ class GRPOTrainer:
         episodes_per_task: int = 4,
         max_steps: int = 10,
         seed: int = 42,
-        env_factory: Callable[[], DealRoomV3] = DealRoomV3,
+        env_factory: Callable[[], DealRoomV3S2P] = DealRoomV3S2P,
     ) -> TrainingMetrics:
         old_rng = self.rng
         self.rng = np.random.default_rng(seed)
@@ -590,7 +590,7 @@ class GRPOTrainer:
         scenario_ids: Sequence[str] = ("aligned", "conflicted"),
         episodes_per_task: int = 4,
         max_steps: int = 10,
-        env_factory: Callable[[], DealRoomV3] = DealRoomV3,
+        env_factory: Callable[[], DealRoomV3S2P] = DealRoomV3S2P,
     ) -> Dict[str, Dict[str, Any]]:
         benchmark: Dict[str, Dict[str, Any]] = {}
 

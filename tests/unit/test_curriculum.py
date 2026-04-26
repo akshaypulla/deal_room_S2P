@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from dataclasses import dataclass
-from deal_room.curriculum.adaptive_generator import (
+from deal_room_S2P.curriculum.adaptive_generator import (
     AdaptiveCurriculumGenerator,
     CurriculumConfig,
     FAILURE_MODE_DESCRIPTIONS,

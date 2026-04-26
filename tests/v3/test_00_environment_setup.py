@@ -121,7 +121,7 @@ def test_0_5_llm_client_imports():
     print("\n[0.5] llm_client module...")
     sys.path.insert(0, str(Path(__file__).parent))
     try:
-        from deal_room.environment.llm_client import (
+        from deal_room_S2P.environment.llm_client import (
             validate_api_keys,
             MAX_TOKENS,
         )

@@ -5,7 +5,7 @@ Tests for stakeholders/cvar_preferences.py - CVaR computation and veto logic.
 import numpy as np
 import pytest
 
-from deal_room.stakeholders.cvar_preferences import (
+from deal_room_S2P.stakeholders.cvar_preferences import (
     StakeholderRiskProfile,
     check_veto_trigger,
     compute_cvar,
@@ -15,7 +15,7 @@ from deal_room.stakeholders.cvar_preferences import (
     evaluate_deal,
     get_observable_signals,
 )
-from deal_room.stakeholders.archetypes import ARCHETYPE_PROFILES, get_archetype
+from deal_room_S2P.stakeholders.archetypes import ARCHETYPE_PROFILES, get_archetype
 
 
 class TestCVaRComputation:

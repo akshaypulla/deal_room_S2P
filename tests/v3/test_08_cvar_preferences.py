@@ -32,8 +32,8 @@ except Exception:
 
 def test_8_1_core_claim():
     print("\n[8.1] CORE CLAIM: eu>0 yet cvar_loss > tau → veto fires...")
-    from deal_room.stakeholders.cvar_preferences import evaluate_deal
-    from deal_room.stakeholders.archetypes import get_archetype
+    from deal_room_S2P.stakeholders.cvar_preferences import evaluate_deal
+    from deal_room_S2P.stakeholders.archetypes import get_archetype
     import numpy as np
 
     legal_profile = get_archetype("Legal")
@@ -68,8 +68,8 @@ def test_8_1_core_claim():
 
 def test_8_2_good_docs_lower_cvar_than_poor():
     print("\n[8.2] Full documentation reduces CVaR vs poor documentation...")
-    from deal_room.stakeholders.cvar_preferences import evaluate_deal
-    from deal_room.stakeholders.archetypes import get_archetype
+    from deal_room_S2P.stakeholders.cvar_preferences import evaluate_deal
+    from deal_room_S2P.stakeholders.archetypes import get_archetype
     import numpy as np
 
     legal_profile = get_archetype("Legal")
@@ -107,7 +107,7 @@ def test_8_2_good_docs_lower_cvar_than_poor():
 
 def test_8_3_cvar_formula_correct():
     print("\n[8.3] CVaR formula correctness: high outcomes → low CVaR...")
-    from deal_room.stakeholders.cvar_preferences import compute_cvar
+    from deal_room_S2P.stakeholders.cvar_preferences import compute_cvar
     import numpy as np
 
     outcomes = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0.5, 0.5])
@@ -128,7 +128,7 @@ def test_8_3_cvar_formula_correct():
 
 def test_8_4_tau_ordering():
     print("\n[8.4] Risk tolerance ordering: Legal < Finance < ExecSponsor...")
-    from deal_room.stakeholders.archetypes import get_archetype
+    from deal_room_S2P.stakeholders.archetypes import get_archetype
 
     legal_tau = get_archetype("Legal").tau
     finance_tau = get_archetype("Finance").tau
@@ -150,8 +150,8 @@ def test_8_4_tau_ordering():
 
 def test_8_5_aggressive_timeline_higher_cvar():
     print("\n[8.5] Aggressive timeline increases TechLead CVaR...")
-    from deal_room.stakeholders.cvar_preferences import evaluate_deal
-    from deal_room.stakeholders.archetypes import get_archetype
+    from deal_room_S2P.stakeholders.cvar_preferences import evaluate_deal
+    from deal_room_S2P.stakeholders.archetypes import get_archetype
     import numpy as np
 
     tech_profile = get_archetype("TechLead")
@@ -189,7 +189,7 @@ def test_8_5_aggressive_timeline_higher_cvar():
 
 def test_8_6_cvar_subadditivity_sanity():
     print("\n[8.6] CVaR is coherent (satisfies subadditivity on this distribution)...")
-    from deal_room.stakeholders.cvar_preferences import compute_cvar
+    from deal_room_S2P.stakeholders.cvar_preferences import compute_cvar
     import numpy as np
 
     # CVaR should be ≤ max (coherent risk measure property)

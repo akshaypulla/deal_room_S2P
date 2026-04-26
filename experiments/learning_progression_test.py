@@ -9,9 +9,9 @@ This proves the environment is not just dynamic, but genuinely learnable.
 import sys
 import numpy as np
 
-sys.path.insert(0, "/Users/akshaypulla/Documents/deal_room")
+sys.path.insert(0, "/Users/akshaypulla/Documents/deal_room_S2P")
 
-from deal_room.environment.dealroom_v3 import DealRoomV3
+from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 
 
 class LearningPolicy:
@@ -20,7 +20,7 @@ class LearningPolicy:
     that produce better reward signals. Simple Q-like update.
     """
 
-    def __init__(self, env: DealRoomV3):
+    def __init__(self, env: DealRoomV3S2P):
         self.env = env
         self.action_space = env.action_space
         self.step = 0
@@ -53,7 +53,7 @@ class LearningPolicy:
 
 
 def run_episode(
-    env: DealRoomV3,
+    env: DealRoomV3S2P,
     policy,
     task_id: str = "aligned",
     seed: int = None,
@@ -109,7 +109,7 @@ def main():
     print("LEARNING PROGRESSION TEST")
     print("=" * 65)
 
-    env = DealRoomV3()
+    env = DealRoomV3S2P()
 
     n_episodes = 30
     task_id = "aligned"

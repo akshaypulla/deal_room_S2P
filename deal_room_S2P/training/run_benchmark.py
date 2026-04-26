@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 
-from deal_room.training.grpo_trainer import (
+from deal_room_S2P.training.grpo_trainer import (
     GRPOTrainer,
     HeuristicPolicyAdapter,
     RandomPolicyAdapter,

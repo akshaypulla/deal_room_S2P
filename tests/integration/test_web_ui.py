@@ -38,4 +38,4 @@ def test_health_endpoint_still_works():
     client = TestClient(app)
     response = client.get("/health")
     assert response.status_code == 200
-    assert "deal-room" in response.text
+    assert "deal_room_s2p" in response.text

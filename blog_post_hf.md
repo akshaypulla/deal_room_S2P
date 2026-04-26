@@ -1,6 +1,6 @@
 # Closing the Deal: Teaching an Agent to Navigate Enterprise Negotiation
 
-_What if every decision could backfire—and the stakes only become clear three moves later?_
+*What if every decision could backfire—and the stakes only become clear three moves later?*
 
 ---
 
@@ -65,16 +65,16 @@ The agent doesn't see the full internal state. It has to infer from partial, imp
 
 The agent chooses from these action types:
 
-| Action               | Effect                                                                 |
-| -------------------- | ---------------------------------------------------------------------- |
-| `direct_message`     | Target a specific stakeholder with a message                           |
-| `send_document`      | Share evidence—ROI analysis, compliance docs, implementation timelines |
-| `group_proposal`     | Propose terms to the full committee                                    |
-| `concession`         | Offer ground on pricing, timeline, or contract terms                   |
-| `backchannel`        | Send a softer, lower-stakes communication                              |
-| `exec_escalation`    | Push for executive-level attention                                     |
-| `walkaway_signal`    | Signal willingness to exit if terms aren't met                         |
-| `reframe_value_prop` | Shift how the value proposition is presented                           |
+| Action | Effect |
+|--------|--------|
+| `direct_message` | Target a specific stakeholder with a message |
+| `send_document` | Share evidence—ROI analysis, compliance docs, implementation timelines |
+| `group_proposal` | Propose terms to the full committee |
+| `concession` | Offer ground on pricing, timeline, or contract terms |
+| `backchannel` | Send a softer, lower-stakes communication |
+| `exec_escalation` | Push for executive-level attention |
+| `walkaway_signal` | Signal willingness to exit if terms aren't met |
+| `reframe_value_prop` | Shift how the value proposition is presented |
 
 Documents matter enormously. Sending the right document to the right person at the right time can unlock progress. Sending the wrong one—or nothing at all—can stall a deal that was moving.
 
@@ -115,31 +115,26 @@ DealRoom breaks from convention in three key ways:
 Let's trace through a real interaction sequence:
 
 **Round 1**: Agent sends ROI analysis to Finance.
-
 - Finance engagement increases slightly
 - Reward: +0.03 (info gain), +0.01 (goal progress)
 
 **Round 2**: Agent sends implementation timeline to TechLead.
-
 - TechLead responds with technical questions
 - Legal's engagement drops—maybe they expected to be looped in earlier?
 - Reward: +0.02 (causal influence), -0.01 (risk from incomplete engagement)
 
 **Round 3**: Agent sends DPA (Data Processing Agreement) to Legal and copies Finance.
-
 - Legal engagement stabilizes
 - Finance engagement rises
 - Committee vote shifts from "mixed" to "leaning positive"
 - Reward: +0.04 (trust + info), +0.02 (goal)
 
 **Round 4**: Agent proposes terms to all stakeholders.
-
 - Procurement raises concern about reference customers
 - Two stakeholders enter "veto precursor" state
 - Reward: -0.02 (risk). Message: "Deal stalling."
 
 **Round 5**: Agent addresses Procurement's concern with specific customer references.
-
 - Procurement engagement improves
 - Veto precursors clear
 - Deal momentum shifts to "progressing"
@@ -159,7 +154,6 @@ Under the hood, DealRoom is framed as a **Markov Decision Process (MDP)** with p
 - **Reward**: 5-dimensional vector shaped per round, with a terminal reward signal from the CCIGrader
 
 The environment uses:
-
 - **Bayesian belief updates**: Stakeholder beliefs evolve based on actions using `belief_tracker.py`
 - **CVaR risk modeling**: Legal and Finance stakeholders evaluate proposals using Conditional Value at Risk, not just expected value
 - **Committee deliberation**: 3-step (or 4-step for hostile scenarios) belief propagation through the influence graph
@@ -173,7 +167,7 @@ The environment is built on **OpenEnv** (from Meta/PyTorch), making it compatibl
 
 Running experiments in DealRoom has surfaced insights that aren't obvious from theory:
 
-**Document sequencing matters more than message content.** In the early rounds, _which_ artifact you send matters more than _what you say_. Sending the DPA to Legal before the ROI to Finance creates a different committee dynamic than the reverse order—even if the messages are identical.
+**Document sequencing matters more than message content.** In the early rounds, *which* artifact you send matters more than *what you say*. Sending the DPA to Legal before the ROI to Finance creates a different committee dynamic than the reverse order—even if the messages are identical.
 
 **Trust is easy to lose and hard to regain.** A single infeasible promise creates a permanent mark on the trust track. The agent can still close the deal, but it will have to work significantly harder in subsequent rounds to overcome the damage.
 
@@ -197,10 +191,7 @@ For AI researchers, DealRoom offers a reproducible benchmark where the challenge
 
 You can interact with DealRoom directly on our Hugging Face Space:
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1g2B0AEz2M8lyLQzlU3QKcgdLyNyengsy?usp=sharing)
-
 **The interface gives you:**
-
 - A view of all six stakeholders with their roles and current engagement status
 - The ability to select any stakeholder and see their message history and what they need
 - Context-aware action suggestions or free-form message composition
@@ -208,7 +199,6 @@ You can interact with DealRoom directly on our Hugging Face Space:
 - Visibility into deal stage progression and veto warnings
 
 **What to observe:**
-
 - How does engagement change after you send a document versus a direct message?
 - What happens to Finance's engagement when Legal raises a compliance concern?
 - Can you identify a "weak signal" before it becomes a veto precursor?
@@ -222,10 +212,10 @@ The interface is designed to make committee dynamics visible. Use it to build in
 
 Here's the thing about enterprise negotiation: sometimes you do everything right and the deal still falls apart. A competitor emerges. Budget gets frozen. The executive sponsor moves to another company.
 
-DealRoom doesn't promise that perfect play always wins. It promises that you'll understand _why_ a deal succeeded or failed—and that's actually more useful.
+DealRoom doesn't promise that perfect play always wins. It promises that you'll understand *why* a deal succeeded or failed—and that's actually more useful.
 
 Because in the room where deals go to die, the winners aren't the ones who never lost. They're the ones who learned to read the signals earlier.
 
 ---
 
-_DealRoom is an OpenEnv-compatible reinforcement learning environment for enterprise B2B negotiation. Explore the code, try the interface, and dig into the research on [GitHub](https://github.com/akshaypulla/deal_room_S2P)._
+*DealRoom is an OpenEnv-compatible reinforcement learning environment for enterprise B2B negotiation. Explore the code, try the interface, and dig into the research on [GitHub](https://github.com/akshaypulla/deal_room_S2P).*

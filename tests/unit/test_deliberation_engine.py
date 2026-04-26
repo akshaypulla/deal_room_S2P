@@ -5,13 +5,13 @@ Tests for committee/deliberation_engine.py - Two-layer deliberation engine.
 import numpy as np
 import pytest
 
-from deal_room.committee.causal_graph import (
+from deal_room_S2P.committee.causal_graph import (
     CausalGraph,
     BeliefDistribution,
     create_neutral_beliefs,
     propagate_beliefs,
 )
-from deal_room.committee.deliberation_engine import (
+from deal_room_S2P.committee.deliberation_engine import (
     DELIBERATION_STEPS,
     CommitteeDeliberationEngine,
     DeliberationResult,
@@ -66,7 +66,7 @@ class TestDeliberationEngine:
         beliefs_after = create_neutral_beliefs(["A", "B", "C"])
 
         # Apply positive delta to A
-        from deal_room.committee.causal_graph import apply_positive_delta
+        from deal_room_S2P.committee.causal_graph import apply_positive_delta
 
         beliefs_after["A"] = apply_positive_delta(beliefs_after["A"], 0.4)
 
@@ -103,7 +103,7 @@ class TestDeliberationEngine:
         beliefs_before = create_neutral_beliefs(["A", "B"])
         beliefs_after = create_neutral_beliefs(["A", "B"])
 
-        from deal_room.committee.causal_graph import apply_positive_delta
+        from deal_room_S2P.committee.causal_graph import apply_positive_delta
 
         beliefs_after["A"] = apply_positive_delta(beliefs_after["A"], 0.3)
 
@@ -163,7 +163,7 @@ class TestDeliberationEngine:
         beliefs_before = create_neutral_beliefs(["A", "B", "C"])
         beliefs_after = create_neutral_beliefs(["A", "B", "C"])
 
-        from deal_room.committee.causal_graph import apply_positive_delta
+        from deal_room_S2P.committee.causal_graph import apply_positive_delta
 
         beliefs_after["A"] = apply_positive_delta(beliefs_after["A"], 0.3)
 
@@ -193,7 +193,7 @@ class TestLayer2Summary:
         beliefs_before = create_neutral_beliefs(["A", "B", "C"])
         beliefs_after = create_neutral_beliefs(["A", "B", "C"])
 
-        from deal_room.committee.causal_graph import apply_positive_delta
+        from deal_room_S2P.committee.causal_graph import apply_positive_delta
 
         beliefs_after["A"] = apply_positive_delta(beliefs_after["A"], 0.4)
 
@@ -234,7 +234,7 @@ class TestDeliberationSteps:
         beliefs_before = create_neutral_beliefs(["A", "B"])
         beliefs_after = create_neutral_beliefs(["A", "B"])
 
-        from deal_room.committee.causal_graph import apply_positive_delta
+        from deal_room_S2P.committee.causal_graph import apply_positive_delta
 
         beliefs_after["A"] = apply_positive_delta(beliefs_after["A"], 0.3)
 
@@ -266,7 +266,7 @@ class TestDeliberationSteps:
         beliefs_before = create_neutral_beliefs(["A", "B", "C"])
         beliefs_after = create_neutral_beliefs(["A", "B", "C"])
 
-        from deal_room.committee.causal_graph import apply_positive_delta
+        from deal_room_S2P.committee.causal_graph import apply_positive_delta
 
         beliefs_after["A"] = apply_positive_delta(beliefs_after["A"], 0.5)
 
@@ -307,7 +307,7 @@ class TestBeliefPropagationIntegration:
         beliefs_before = create_neutral_beliefs(["A", "B", "C"])
         beliefs_after = create_neutral_beliefs(["A", "B", "C"])
 
-        from deal_room.committee.causal_graph import apply_positive_delta
+        from deal_room_S2P.committee.causal_graph import apply_positive_delta
 
         beliefs_after["A"] = apply_positive_delta(beliefs_after["A"], 0.5)
 
@@ -339,7 +339,7 @@ class TestBeliefPropagationIntegration:
         beliefs_before = create_neutral_beliefs(["A", "B"])
         beliefs_after = create_neutral_beliefs(["A", "B"])
 
-        from deal_room.committee.causal_graph import apply_positive_delta
+        from deal_room_S2P.committee.causal_graph import apply_positive_delta
 
         beliefs_after["A"] = apply_positive_delta(beliefs_after["A"], 0.4)
 

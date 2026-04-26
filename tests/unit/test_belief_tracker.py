@@ -6,12 +6,12 @@ import math
 import numpy as np
 import pytest
 
-from deal_room.committee.causal_graph import (
+from deal_room_S2P.committee.causal_graph import (
     BeliefDistribution,
     create_neutral_beliefs,
     VENDOR_TYPES,
 )
-from deal_room.committee.belief_tracker import (
+from deal_room_S2P.committee.belief_tracker import (
     ACTION_LIKELIHOODS,
     _get_likelihood,
     bayesian_update,

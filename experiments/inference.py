@@ -10,10 +10,10 @@ from typing import Dict, List, Optional
 
 from openai import OpenAI
 
-from deal_room.environment.dealroom_v3 import DealRoomV3
+from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 from models import DealRoomAction, DealRoomObservation
 from server.grader import CCIGrader
-from deal_room.environment.llm_client import generate_stakeholder_response
+from deal_room_S2P.environment.llm_client import generate_stakeholder_response
 
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 BENCHMARK = "deal-room-v3"
@@ -429,7 +429,7 @@ def maybe_generate_message(
 
 
 def run_task(task_id: str, seed: int = 42) -> Dict[str, object]:
-    env = DealRoomV3()
+    env = DealRoomV3S2P()
     rewards: List[float] = []
     final_score = CCIGrader.MIN_SCORE
     success = False
