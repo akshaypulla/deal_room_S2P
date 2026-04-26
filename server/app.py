@@ -266,11 +266,14 @@ def _setup_gradio_ui():
         )
         from server.gradio_custom import (
             DealRoomWebManager,
-            build_custom_tab,
-            load_metadata,
+            load_metadata as load_meta_custom,
+        )
+        from server.gradio_clean import (
+            build_clean_tab,
+            load_metadata as load_meta_clean,
         )
 
-        _metadata = load_metadata()
+        _metadata = load_meta_clean()
         _web_manager = DealRoomWebManager(_sessions, _metadata)
         _action_fields = _extract_action_fields(DealRoomAction)
         _playground = build_gradio_app(
@@ -281,17 +284,10 @@ def _setup_gradio_ui():
             title=_metadata.name,
             quick_start_md=None,
         )
-        _custom = build_custom_tab(
-            _web_manager,
-            _action_fields,
-            _metadata,
-            _is_chat_env(DealRoomAction),
-            _metadata.name,
-            None,
-        )
+        _clean = build_clean_tab(_sessions, _metadata)
         _web_blocks = gr.TabbedInterface(
-            [_playground, _custom],
-            tab_names=["Playground", "Custom"],
+            [_playground, _clean],
+            tab_names=["Playground", "Clean"],
             title=get_gradio_display_title(_metadata),
         )
         gr.mount_gradio_app(
