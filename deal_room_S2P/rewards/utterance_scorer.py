@@ -32,8 +32,8 @@ from models import DealRoomAction
 
 LOG2_6 = math.log(6) / math.log(2)
 LOOKAHEAD_COST = 0.07
-REWARD_SCALE = 6.0
-REWARD_GAIN = 3.0
+REWARD_SCALE = 2.0
+REWARD_GAIN = 1.5
 
 
 def _entropy_base2(values: np.ndarray) -> float:
