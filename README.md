@@ -1,3 +1,13 @@
+---
+title: deal-room-S2P
+emoji: 🤝
+colorFrom: blue
+colorTo: green
+sdk: gradio
+app_file: app.py
+pinned: false
+---
+
 # Closing the Deal: Teaching an Agent to Navigate Enterprise Negotiation
 
 _What if every decision could backfire—and the stakes only become clear three moves later?_
