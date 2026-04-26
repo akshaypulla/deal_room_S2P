@@ -720,6 +720,29 @@ class DealRoomWebManager:
         self.metadata = metadata
         self._playground_session_id: Optional[str] = None
 
+    async def reset_environment(self) -> Dict[str, Any]:
+        import asyncio
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, self.pool.reset, "aligned", 42, None)
+        session_id, observation, state = result
+        self._playground_session_id = session_id
+        return {"session_id": session_id, "observation": observation.model_dump(), "state": state.model_dump()}
+
+    async def step_environment(self, action_data: Dict[str, Any]) -> Dict[str, Any]:
+        import asyncio
+        loop = asyncio.get_event_loop()
+        if not self._playground_session_id:
+            raise RuntimeError("No active session. Call reset_environment first.")
+        action = DealRoomAction(**action_data)
+        result = await loop.run_in_executor(None, self.pool.step, self._playground_session_id, action)
+        observation, reward, done, info, state = result
+        return {"observation": observation.model_dump(), "reward": reward, "done": done, "info": info, "state": state.model_dump()}
+
+    def get_state(self) -> Dict[str, Any]:
+        if not self._playground_session_id:
+            return {}
+        return self.pool.state(self._playground_session_id).model_dump()
+
     def reset_session(
         self,
         task_id: str,
