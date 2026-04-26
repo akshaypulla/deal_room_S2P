@@ -3,8 +3,8 @@ title: deal-room-S2P
 emoji: 🤝
 colorFrom: blue
 colorTo: green
-sdk: gradio
-app_file: app.py
+sdk: docker
+app_file: server/app.py
 pinned: false
 ---
 
