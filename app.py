@@ -9,26 +9,25 @@ import os
 import sys
 import time
 import uuid
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 import gradio as gr
-from openenv.core.env_server.types import EnvironmentMetadata
-from openenv.core.env_server.gradio_theme import (
-    OPENENV_GRADIO_CSS,
-    OPENENV_GRADIO_THEME,
-)
-from openenv.core.env_server.gradio_ui import (
-    build_gradio_app,
-    _extract_action_fields,
-    _is_chat_env,
-)
-from openenv.core.env_server.web_interface import _extract_action_fields
-
 import html
 from pathlib import Path
 
 STANDARD_STAKEHOLDERS = ["Legal", "Finance", "TechLead", "Procurement", "Operations", "ExecSponsor"]
+
+
+@dataclass
+class EnvironmentMetadata:
+    name: str = ""
+    description: str = ""
+    version: str = "1.0.0"
+    author: str = ""
+    readme_content: Optional[str] = None
+    tasks: List[Dict[str, Any]] = field(default_factory=list)
 
 SESSION_COOKIE_NAME = "dealroom_session_id"
 
@@ -46,8 +45,6 @@ class DealRoomSessionPool:
         self.max_sessions = max_sessions
         self.ttl_seconds = ttl_seconds
         self._sessions: Dict[str, SessionEntry] = {}
-        self._lock = uuid.uuid4().hex[:16]
-        import threading
         self._lock = threading.Lock()
 
     def reset(
@@ -263,6 +260,11 @@ def load_metadata() -> EnvironmentMetadata:
         version="1.0.0",
         author="akshaypulla",
         readme_content=readme,
+        tasks=[
+            {"id": "aligned", "description": "Low-friction cooperative scenario"},
+            {"id": "conflicted", "description": "CTO-CFO tension with coalition dynamics"},
+            {"id": "hostile_acquisition", "description": "Post-acquisition with high CVaR risk"},
+        ],
     )
 
 
