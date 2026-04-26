@@ -10,6 +10,41 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
+class PricingTable(BaseModel):
+    base_price: int = 0
+    discount_tiers: List[Dict[str, Any]] = Field(default_factory=list)
+    payment_terms: str = "net_30"
+    optional_addons: List[str] = Field(default_factory=list)
+
+
+class SLACommitment(BaseModel):
+    uptime_guarantee: float = 0.99
+    response_time_hours: int = 4
+    resolution_time_hours: int = 24
+    support_level: str = "named_support_lead"
+    penalties: Optional[Dict[str, Any]] = None
+
+
+class SubmitProposalAction(BaseModel):
+    pricing_table: PricingTable = Field(default_factory=PricingTable)
+    sla_commitments: SLACommitment = Field(default_factory=SLACommitment)
+    attached_documents: List[str] = Field(default_factory=list)
+    message: str = ""
+    compliance_attestations: List[str] = Field(default_factory=list)
+
+
+class RedlineClauseAction(BaseModel):
+    clause_id: str = ""
+    proposed_text: str = ""
+    rationale: str = ""
+    impact_summary: Optional[str] = None
+
+
+class AcknowledgeStageAction(BaseModel):
+    acknowledged_stage: str = ""
+    confirmation_message: str = ""
+
+
 class DealRoomAction(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
     action_type: str = "direct_message"
@@ -21,6 +56,9 @@ class DealRoomAction(BaseModel):
     channel: str = "formal"
     mode: str = "async_email"
     lookahead: Optional["LookaheadRequest"] = None
+    submit_proposal: Optional[SubmitProposalAction] = None
+    redline_clause: Optional[RedlineClauseAction] = None
+    acknowledge_stage: Optional[AcknowledgeStageAction] = None
 
     @field_validator("message")
     @classmethod
@@ -38,6 +76,15 @@ class DealRoomAction(BaseModel):
         if self.target_ids and self.target == "all":
             self.target = ",".join(self.target_ids)
         return self
+
+    def get_parsed_proposal(self) -> Optional[SubmitProposalAction]:
+        return self.submit_proposal
+
+    def get_parsed_redline(self) -> Optional[RedlineClauseAction]:
+        return self.redline_clause
+
+    def get_parsed_acknowledge(self) -> Optional[AcknowledgeStageAction]:
+        return self.acknowledge_stage
 
 
 class DealRoomObservation(BaseModel):

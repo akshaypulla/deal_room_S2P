@@ -63,6 +63,10 @@ class AdaptiveCurriculumGenerator:
         self._current_stage = "evaluation"
         self._turns_in_stage = 0
         self._weighted_utilities_buffer: List[float] = []
+        self._agent_capability = 0.3
+        self._episodes_seen = 0
+        self._veto_streak = 0
+        self._consecutive_successes = 0
 
     def _initialize_scenario_pool(self):
         base_configs = [
@@ -103,6 +107,8 @@ class AdaptiveCurriculumGenerator:
         failure_counts: Dict[str, int] = {}
         weighted_utility_history: List[float] = []
         stage_progression: Dict[str, int] = {"evaluation": 0, "negotiation": 0, "legal_review": 0}
+        veto_count = 0
+        success_count = 0
 
         for traj in trajectories:
             detected = self._detect_failures(traj)
@@ -117,10 +123,20 @@ class AdaptiveCurriculumGenerator:
                     if stage in stage_progression:
                         stage_progression[stage] += 1
 
+            terminal = getattr(traj, "terminal_outcome", "")
+            if "veto" in terminal or "hard_veto" in terminal:
+                veto_count += 1
+            elif "deal_closed" in terminal or terminal == "":
+                success_count += 1
+
         total = len(trajectories)
         failure_modes = (
             {k: v / total for k, v in failure_counts.items()} if total > 0 else {}
         )
+
+        self._episodes_seen += total
+        self._veto_streak = veto_count if veto_count == total else max(0, self._veto_streak - 1)
+        self._consecutive_successes = success_count if success_count == total else max(0, self._consecutive_successes - 1)
 
         recent_rewards = []
         for t in trajectories[-5:]:
@@ -131,12 +147,13 @@ class AdaptiveCurriculumGenerator:
                 )
                 recent_rewards.append(weighted)
         capability = float(np.mean(recent_rewards)) if recent_rewards else 0.5
+        self._agent_capability = 0.9 * self._agent_capability + 0.1 * capability if self._episodes_seen > 5 else capability
 
         return FailureAnalysis(
             failure_modes=failure_modes,
             worst_graph_configs=[],
             worst_cvar_configs=[],
-            agent_capability_estimate=capability,
+            agent_capability_estimate=self._agent_capability,
             weighted_utility_history=weighted_utility_history[-50:],
             stage_progression=stage_progression,
         )
@@ -201,7 +218,17 @@ class AdaptiveCurriculumGenerator:
     def generate_adaptive_scenario(
         self, failure_analysis: Optional[FailureAnalysis] = None
     ) -> Dict:
+        if self._episodes_seen < 10:
+            scenario = self._rng.choice([s for s in self._scenario_pool if s["difficulty"] == "easy"])
+            scenario = dict(scenario)
+            scenario["seed"] = int(self._rng.integers(0, 2**31))
+            return scenario
+
         scenario = self.select_next_scenario(failure_analysis)
+
+        if self._veto_streak >= 3:
+            scenario["difficulty"] = "easy"
+            scenario["reduce_cvar_tension"] = True
 
         if failure_analysis and failure_analysis.failure_modes:
             for failure_id, freq in failure_analysis.failure_modes.items():
@@ -217,6 +244,9 @@ class AdaptiveCurriculumGenerator:
             if recent_avg < STAGE_GATE_THETA_COMP:
                 scenario["difficulty"] = "easy"
                 scenario["focus_stage"] = "evaluation"
+
+        if self._consecutive_successes >= 5 and self._agent_capability > 0.6:
+            self._consecutive_successes = 0
 
         return scenario
 

@@ -25,6 +25,7 @@ from ..environment.constants import (
     STAGE_GATE_THETA_PASS,
     STAGE_GATE_THETA_STALL,
     STEP_PENALTY,
+    TERMINAL_REWARDS_V2,
 )
 from ..environment.lookahead import LookaheadSimulator
 from models import DealRoomAction, DealRoomObservation, DealRoomState
@@ -409,13 +410,37 @@ class DealRoomV3:
             action, previous_beliefs, silent_period_duration
         )
 
-        reward, reward_components = self._compute_reward(
-            action,
-            state_before,
-            lookahead_was_requested,
+        state_after = StateSnapshot(
+            beliefs=self._beliefs,
+            active_blockers=list(self._state.active_blockers or []),
+            risk_profiles={sid: get_archetype(sid) for sid in STANDARD_STAKEHOLDERS},
+            authority_weights=self._graph.authority_weights if self._graph else {},
+            current_terms=self._state.offer_state if self._state else {},
+            round_number=self._round_number,
+            deal_stage=self._state.deal_stage if self._state else "evaluation",
+            deal_momentum=getattr(self._state, "deal_momentum", "progressing"),
         )
 
+        score = self._utterance_scorer.score(
+            action=action,
+            state_before=state_before,
+            state_after=state_after,
+            true_graph=self._graph,
+            lookahead_used=lookahead_was_requested,
+        )
+
+        reward = float(score.weighted_sum(REWARD_WEIGHTS))
+        reward_components = score.to_dict()
+
         reward += STEP_PENALTY
+
+        hard_veto_reason = self._check_hard_veto_for_stage()
+        if hard_veto_reason:
+            self._state.active_blockers = [hard_veto_reason]
+            self._state.stage_regressions += 1
+            return self._build_early_termination_obs(
+                action, reward, hard_veto_reason, {}
+            )
 
         risk_snapshot = self._evaluate_committee_risk(self._state.offer_state)
         precursors = self._compute_veto_precursors(risk_snapshot)
@@ -895,6 +920,33 @@ class DealRoomV3:
             offer_state["liability_cap"] = min(
                 offer_state.get("liability_cap", 1000000), 500000
             )
+        elif action.action_type == "submit_proposal" and action.submit_proposal:
+            proposal = action.submit_proposal
+            offer_state["price"] = proposal.pricing_table.base_price
+            offer_state["has_dpa"] = (
+                "dpa" in proposal.attached_documents or offer_state.get("has_dpa", False)
+            )
+            offer_state["has_security_cert"] = (
+                "security_cert" in proposal.attached_documents
+                or offer_state.get("has_security_cert", False)
+            )
+            if proposal.sla_commitments:
+                offer_state["support_level"] = proposal.sla_commitments.support_level
+                offer_state["response_time_hours"] = proposal.sla_commitments.response_time_hours
+            offer_state["compliance_attestations"] = proposal.compliance_attestations
+            offer_state["proposal_submitted"] = True
+        elif action.action_type == "redline_clause" and action.redline_clause:
+            redline = action.redline_clause
+            if "redlines" not in offer_state:
+                offer_state["redlines"] = []
+            offer_state["redlines"].append({
+                "clause_id": redline.clause_id,
+                "proposed_text": redline.proposed_text,
+                "rationale": redline.rationale,
+            })
+            offer_state["last_redline"] = redline.clause_id
+        elif action.action_type == "acknowledge_stage":
+            offer_state["stage_acknowledged"] = self._state.deal_stage
 
         self._state.offer_state = offer_state
 
@@ -1157,6 +1209,59 @@ class DealRoomV3:
                 0.5 * response_accuracy + 0.5 * (sum(delta_scores) / len(delta_scores))
             )
         return float(response_accuracy)
+
+    def _check_hard_veto_for_stage(self) -> Optional[str]:
+        stage = self._state.deal_stage
+        offer = self._state.offer_state or {}
+        if stage == "legal_review":
+            if not offer.get("has_dpa"):
+                return "missing_dpa"
+            if not offer.get("has_security_cert"):
+                return "missing_security_cert"
+        if stage == "final_approval":
+            required_docs = ["dpa", "security_cert"]
+            missing = [d for d in required_docs if not offer.get(f"has_{d.replace('_', '_')}")]
+            if missing:
+                return f"missing_{missing[0]}"
+            if not offer.get("proposal_submitted"):
+                return "missing_final_proposal"
+        return None
+
+    def _build_early_termination_obs(
+        self,
+        action: DealRoomAction,
+        reward: float,
+        hard_veto_reason: str,
+        info: Dict[str, Any],
+    ) -> Tuple[DealRoomObservation, float, bool, Dict[str, Any]]:
+        terminal_outcome = f"hard_veto::{hard_veto_reason}"
+        reward += TERMINAL_REWARDS_V2["hard_veto"]
+        self._state.terminal_outcome = terminal_outcome
+        self._state.deal_failed = True
+        self._state.failure_reason = hard_veto_reason
+        self._state.deal_momentum = "critical"
+        info["terminal_reward"] = TERMINAL_REWARDS_V2["hard_veto"]
+        info["terminal_outcome"] = terminal_outcome
+        info["terminal_category"] = "hard_veto"
+        info["hard_veto_reason"] = hard_veto_reason
+        risk_snapshot = self._evaluate_committee_risk(self._state.offer_state or {})
+        return (
+            self._build_observation(
+                vendor_action=action,
+                is_reset=False,
+                stakeholder_messages={},
+                done=True,
+                reward=reward,
+                info=info,
+                risk_snapshot=risk_snapshot,
+                committee_vote=None,
+                exec_sponsor_activated=False,
+                silent_period_duration=0,
+            ),
+            reward,
+            True,
+            info,
+        )
 
     def close(self) -> None:
         return None
