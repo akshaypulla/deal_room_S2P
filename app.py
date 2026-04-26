@@ -7,6 +7,11 @@ Gradio interface using only essential dependencies.
 
 import os
 import sys
+
+# Add current directory to Python path so deal_room_S2P can be imported
+if os.path.dirname(__file__) not in sys.path:
+    sys.path.insert(0, os.path.dirname(__file__) or ".")
+
 import time
 import uuid
 import threading
