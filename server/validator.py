@@ -1,8 +1,8 @@
 """
-Output validator for DealRoom V2.5.
+Output validator for DealRoom V3.
 
-JSON-first parsing is preserved, but target validation is dynamic and tied to the
-active episode roster.
+JSON-first parsing, target validation, action normalization.
+No business logic — pure HTTP input normalization.
 """
 
 from __future__ import annotations
@@ -11,7 +11,38 @@ import json
 import re
 from typing import Dict, List, Optional, Tuple
 
-from server.scenarios import expand_targets
+
+LEGACY_TARGET_ALIASES = {
+    "cfo": ["finance"],
+    "cto": ["technical"],
+    "legal": ["legal_compliance"],
+    "procurement": ["procurement"],
+    "ops": ["operations"],
+    "cto_cfo": ["technical", "finance"],
+    "legal_procurement": ["legal_compliance", "procurement"],
+}
+
+
+def expand_targets(target: str, available_ids: List[str]) -> List[str]:
+    if not target:
+        return []
+    lowered = target.lower().strip()
+    if lowered == "all":
+        return list(available_ids)
+    if lowered in LEGACY_TARGET_ALIASES:
+        return [item for item in LEGACY_TARGET_ALIASES[lowered] if item in available_ids]
+    raw_parts = [part.strip() for part in target.split(",") if part.strip()]
+    normalized = []
+    for part in raw_parts:
+        part_lower = part.lower()
+        if part_lower in LEGACY_TARGET_ALIASES:
+            normalized.extend(
+                [item for item in LEGACY_TARGET_ALIASES[part_lower] if item in available_ids]
+            )
+        elif part_lower in available_ids:
+            normalized.append(part_lower)
+    return list(dict.fromkeys(normalized))
+
 
 VALID_ACTION_TYPES = {
     "direct_message",
@@ -22,6 +53,9 @@ VALID_ACTION_TYPES = {
     "walkaway_signal",
     "reframe_value_prop",
     "exec_escalation",
+    "submit_proposal",
+    "redline_clause",
+    "acknowledge_stage",
 }
 
 VALID_PROPOSED_TERM_KEYS = {
@@ -153,6 +187,9 @@ class OutputValidator:
             "walkaway_signal": ["walk away", "pause the deal", "step back"],
             "reframe_value_prop": ["reframe", "different value", "reposition"],
             "exec_escalation": ["executive escalation", "exec escalation", "bring in leadership"],
+            "submit_proposal": ["submit proposal", "formal proposal", "submit terms"],
+            "redline_clause": ["redline", "change clause", "modify contract"],
+            "acknowledge_stage": ["acknowledge", "noted", "understood stage"],
         }
         for action_type in VALID_ACTION_TYPES:
             if action_type in lowered or action_type.replace("_", " ") in lowered:

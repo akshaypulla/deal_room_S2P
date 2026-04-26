@@ -4,7 +4,12 @@ Thin HTTP wrapper only. Zero business logic. All logic in deal_room/.
 """
 
 import os
-from typing import Optional
+import sys
+import time
+import uuid
+from dataclasses import dataclass
+from threading import Lock
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,17 +17,114 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
 from deal_room.environment.dealroom_v3 import STANDARD_STAKEHOLDERS
-from models import DealRoomAction
-from server.session_pool import DealRoomSessionPool, SESSION_COOKIE_NAME
-from server.validator import OutputValidator
+from models import DealRoomAction, DealRoomObservation, DealRoomState
 
 app = FastAPI(title="DealRoom", version="1.0.0")
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
 
+SESSION_COOKIE_NAME = "dealroom_session_id"
+
+
+@dataclass
+class SessionEntry:
+    env: Any
+    last_access: float
+
+
+class DealRoomSessionPool:
+    """Keeps one environment instance per browser/client session."""
+
+    def __init__(self, max_sessions: int = 128, ttl_seconds: int = 60 * 60 * 6):
+        self.max_sessions = max_sessions
+        self.ttl_seconds = ttl_seconds
+        self._sessions: Dict[str, SessionEntry] = {}
+        self._lock = Lock()
+
+    def reset(
+        self,
+        task_id: str,
+        seed: Optional[int],
+        session_id: Optional[str] = None,
+    ) -> Tuple[str, DealRoomObservation, DealRoomState]:
+        _base = os.environ.get("DEALROOM_ENV_PATH", "/app/env")
+        if _base not in sys.path:
+            sys.path.insert(0, _base)
+
+        from deal_room import DealRoomV3
+
+        with self._lock:
+            self._prune_locked()
+            resolved_session_id = session_id or self._new_session_id()
+            entry = self._sessions.get(resolved_session_id)
+            if entry is None:
+                entry = SessionEntry(env=DealRoomV3(), last_access=time.time())
+                self._sessions[resolved_session_id] = entry
+            obs = entry.env.reset(seed=seed, task_id=task_id)
+            entry.last_access = time.time()
+            state = entry.env._state
+            if len(self._sessions) > self.max_sessions:
+                self._prune_oldest_locked()
+            return resolved_session_id, obs, state
+
+    def step(
+        self,
+        session_id: str,
+        action: DealRoomAction,
+    ) -> Tuple[DealRoomObservation, float, bool, dict, DealRoomState]:
+        with self._lock:
+            entry = self._sessions.get(session_id)
+            if entry is None:
+                raise KeyError(session_id)
+            obs, reward, done, info = entry.env.step(action)
+            entry.last_access = time.time()
+            return obs, reward, done, info, entry.env._state
+
+    def state(self, session_id: str) -> DealRoomState:
+        with self._lock:
+            entry = self._sessions.get(session_id)
+            if entry is None:
+                raise KeyError(session_id)
+            entry.last_access = time.time()
+            return entry.env._state
+
+    def get_beliefs(self, session_id: str) -> Optional[Dict[str, Any]]:
+        with self._lock:
+            entry = self._sessions.get(session_id)
+            if entry is None:
+                return None
+            entry.last_access = time.time()
+            return entry.env._beliefs
+
+    def has_session(self, session_id: Optional[str]) -> bool:
+        if not session_id:
+            return False
+        with self._lock:
+            return session_id in self._sessions
+
+    @staticmethod
+    def _new_session_id() -> str:
+        return uuid.uuid4().hex[:16]
+
+    def _prune_locked(self) -> None:
+        now = time.time()
+        expired = [
+            session_id
+            for session_id, entry in self._sessions.items()
+            if now - entry.last_access > self.ttl_seconds
+        ]
+        for session_id in expired:
+            self._sessions.pop(session_id, None)
+
+    def _prune_oldest_locked(self) -> None:
+        if not self._sessions:
+            return
+        oldest = min(self._sessions.items(), key=lambda item: item[1].last_access)[0]
+        self._sessions.pop(oldest, None)
+
+
 _sessions = DealRoomSessionPool()
-_validator = OutputValidator(mode="strict")
 _http_targets = [stakeholder_id.lower() for stakeholder_id in STANDARD_STAKEHOLDERS]
 
 
@@ -119,17 +221,26 @@ def _set_session_cookie(response: Response, session_id: str) -> None:
 
 
 def _normalize_http_action(action: DealRoomAction) -> DealRoomAction:
-    normalized = _validator._normalize(action.model_dump(), _http_targets)
+    canonical = {sid.lower(): sid for sid in STANDARD_STAKEHOLDERS}
+    resolved_target_ids = [
+        canonical.get(target.strip().lower(), target.strip())
+        for target in (action.target_ids or [])
+        if target and target.strip()
+    ]
+    if not resolved_target_ids and action.target:
+        target = action.target.strip()
+        if target.lower() == "all":
+            resolved_target_ids = list(STANDARD_STAKEHOLDERS)
+        else:
+            resolved_target_ids = [
+                canonical.get(item.strip().lower(), item.strip())
+                for item in target.split(",")
+                if item.strip()
+            ]
     return action.model_copy(
         update={
-            "action_type": normalized["action_type"],
-            "target": normalized["target"],
-            "target_ids": normalized["target_ids"],
-            "message": normalized["message"],
-            "documents": normalized["documents"],
-            "proposed_terms": normalized["proposed_terms"],
-            "channel": normalized["channel"],
-            "mode": normalized["mode"],
+            "target_ids": resolved_target_ids,
+            "target": action.target or ",".join(resolved_target_ids) if resolved_target_ids else "all",
         }
     )
 
@@ -249,7 +360,6 @@ def _setup_gradio_ui():
     except ImportError as e:
         print(f"Standalone Gradio not available: {e}")
 
-    # Fall back to OpenEnv Gradio if available
     try:
         import gradio as gr
         from openenv.core.env_server.gradio_theme import (

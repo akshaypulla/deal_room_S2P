@@ -1,7 +1,7 @@
 """DealRoom server exports."""
 
 from .claims import CommitmentLedger
-from .deal_room_environment import DealRoomEnvironment
+from .DealRoomV3_environment import DealRoomEnvironment
 from .grader import CCIGrader
 from .scenarios import ROLE_LIBRARY, SCENARIOS, expand_targets, generate_episode
 from .semantics import DEFAULT_ANALYZER, SemanticAnalyzer

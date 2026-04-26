@@ -12,8 +12,7 @@ import gradio as gr
 from openenv.core.env_server.types import EnvironmentMetadata
 
 from models import DealRoomAction, DealRoomObservation, DealRoomState
-from server.grader import CCIGrader
-from server.session_pool import DealRoomSessionPool
+from server.app import DealRoomSessionPool
 from server.walkthrough_data import GUIDE_DATA
 
 _LLM_MODEL = None
@@ -1016,6 +1015,7 @@ def build_custom_tab(
         updated["trace"] = trace
         updated["current_observation"] = obs.model_dump()
         updated["current_state"] = state
+        updated["last_info"] = info
         updated["score_delta"] = reward - old_score if old_score else None
         updated["last_score"] = reward
         updated["round_complete"] = done
@@ -1034,9 +1034,7 @@ def build_custom_tab(
         observation = view_state.get("current_observation") or {}
         if not observation.get("done"):
             return saved_runs, view_state
-        score = CCIGrader.compute(
-            DealRoomState.model_validate(view_state.get("current_state") or {})
-        )
+        score = float(view_state.get("last_score", 0.0))
         run_id = f"{view_state['level']}-{view_state['task']}-{view_state['seed']}-{view_state['source']}-{len(saved_runs) + 1}"
         saved_runs = [item for item in saved_runs if item.get("id") != run_id]
         saved_runs.append(
@@ -1220,47 +1218,33 @@ def build_custom_tab(
         return f"<div class='signals-area'>{''.join(signals)}</div>"
 
     def _compute_score_breakdown(view_state: Dict[str, Any]) -> Dict[str, float]:
+        info = view_state.get("last_info", {})
+        reward_components = info.get("reward_components", {})
+        if reward_components:
+            return {k: float(v) for k, v in reward_components.items()}
+        observation = view_state.get("current_observation") or {}
+        if not observation:
+            return {"goal": 0.0, "trust": 0.0, "info": 0.0, "risk": 0.0, "causal": 0.0}
+        done = observation.get("done", False)
+        if done:
+            terminal = info.get("terminal_reward", 0.0)
+            if terminal > 0:
+                return {"goal": terminal, "trust": 0.0, "info": 0.0, "risk": 0.0, "causal": 0.0}
+            elif terminal < 0:
+                return {"goal": 0.0, "trust": 0.0, "info": 0.0, "risk": abs(terminal), "causal": 0.0}
         state = view_state.get("current_state") or {}
-        mandatory_ids = [
-            sid
-            for sid, p in state.get("stakeholder_private", {}).items()
-            if p.get("mandatory")
+        positive_masses = [
+            belief.get("positive_mass", 0.5)
+            for belief in state.get("beliefs", {}).values()
         ]
-        approval_score = 0.0
-        if mandatory_ids:
-            approvals = [
-                state["stakeholder_private"][sid]["approval"] for sid in mandatory_ids
-            ]
-            approval_score = min(1.0, sum(approvals) / len(approvals))
-        constraints = list(state.get("hidden_constraints", {}).values())
-        constraint_score = 0.0
-        if constraints:
-            resolved = sum(1 for c in constraints if c.get("resolved"))
-            constraint_score = resolved / len(constraints)
-        violations = state.get("feasibility_state", {}).get("violations", [])
-        penalty = min(0.20, 0.05 * len(violations))
-        feasibility_score = max(0.0, 1.0 - penalty)
-        trusts = [p["trust"] for p in state.get("stakeholder_private", {}).values()]
-        mark_penalty = sum(
-            0.03 * len(p.get("permanent_marks", []))
-            for p in state.get("stakeholder_private", {}).values()
-        )
-        average_trust = sum(trusts) / len(trusts) if trusts else 0.0
-        relationship_score = max(0.0, min(1.0, average_trust - mark_penalty))
-        max_rounds = state.get("max_rounds", 20)
-        round_num = state.get("round_number", 0)
-        efficiency_score = (
-            max(0.1, 1.0 - ((round_num / max_rounds) ** 1.25) * 0.45)
-            if max_rounds > 0
-            else 0.0
-        )
-        return {
-            "approval_completeness": approval_score,
-            "constraint_satisfaction": constraint_score,
-            "term_feasibility": feasibility_score,
-            "relationship_durability": relationship_score,
-            "efficiency": efficiency_score,
-        }
+        avg_belief = sum(positive_masses) / max(len(positive_masses), 1)
+        blockers = list(observation.get("active_blockers", []))
+        goal = avg_belief * (1.0 - 0.15 * len(blockers))
+        trust = avg_belief * (1.0 - 0.05 * len(blockers))
+        risk = max(0.0, 1.0 - avg_belief - 0.1 * len(blockers))
+        info_dim = 0.5
+        causal = 0.5
+        return {"goal": goal, "trust": trust, "info": info_dim, "risk": risk, "causal": causal}
 
     def _build_why(view_state: Dict[str, Any]) -> str:
         view_state = _normalize_view_state(view_state)
@@ -1282,10 +1266,10 @@ def build_custom_tab(
         else:
             content = "No active blockers. The negotiation is progressing well."
         breakdown = _compute_score_breakdown(view_state)
-        weights = CCIGrader.WEIGHTS
+        weights = {"goal": 0.25, "trust": 0.20, "info": 0.20, "risk": 0.20, "causal": 0.15}
         breakdown_html = ""
         for key, weight in weights.items():
-            label = key.replace("_", " ").title()
+            label = key.title()
             value = breakdown.get(key, 0.0)
             pct = int(value * 100)
             breakdown_html += f"""

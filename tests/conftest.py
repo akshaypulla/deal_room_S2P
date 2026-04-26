@@ -6,16 +6,16 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from models import DealRoomAction
-from server.deal_room_environment import DealRoomEnvironment
+from deal_room.environment.dealroom_v3 import DealRoomV3
 
 
 @pytest.fixture
-def env() -> DealRoomEnvironment:
-    return DealRoomEnvironment()
+def env() -> DealRoomV3:
+    return DealRoomV3()
 
 
 @pytest.fixture
-def aligned_env(env: DealRoomEnvironment) -> DealRoomEnvironment:
+def aligned_env(env: DealRoomV3) -> DealRoomV3:
     env.reset(seed=42, task_id="aligned")
     return env
 

@@ -10,8 +10,7 @@ import gradio as gr
 from openenv.core.env_server.types import EnvironmentMetadata
 
 from models import DealRoomAction, DealRoomObservation, DealRoomState
-from server.grader import CCIGrader
-from server.session_pool import DealRoomSessionPool
+from server.app import DealRoomSessionPool
 from server.walkthrough_data import GUIDE_DATA
 
 
@@ -302,6 +301,7 @@ def _record_step(view_state: Dict[str, Any], action: DealRoomAction, obs: DealRo
     updated["trace"] = trace
     updated["current_observation"] = obs.model_dump()
     updated["current_state"] = state
+    updated["last_info"] = info
     updated["score_delta"] = reward - old_score if old_score else None
     updated["last_score"] = reward
     updated["round_complete"] = done
@@ -321,7 +321,7 @@ def _save_run_if_complete(view_state: Dict[str, Any], saved_runs: List[Dict[str,
     observation = view_state.get("current_observation") or {}
     if not observation.get("done"):
         return saved_runs, view_state
-    score = CCIGrader.compute(DealRoomState.model_validate(view_state.get("current_state") or {}))
+    score = float(view_state.get("last_score", 0.0))
     run_id = f"{view_state['level']}-{view_state['task']}-{view_state['seed']}-{view_state['source']}-{len(saved_runs) + 1}"
     saved_runs = [item for item in saved_runs if item.get("id") != run_id]
     saved_runs.append({
@@ -459,31 +459,42 @@ def _build_hint(view_state: Dict[str, Any]) -> str:
 
 
 def _compute_score_breakdown(view_state: Dict[str, Any]) -> Dict[str, float]:
+    info = view_state.get("last_info", {})
+    reward_components = info.get("reward_components", {})
+    if reward_components:
+        return {k: float(v) for k, v in reward_components.items()}
+    observation = view_state.get("current_observation") or {}
+    if not observation:
+        return {"goal": 0.0, "trust": 0.0, "info": 0.0, "risk": 0.0, "causal": 0.0}
+    done = observation.get("done", False)
+    if done:
+        terminal = info.get("terminal_reward", 0.0)
+        if terminal > 0:
+            return {"goal": terminal, "trust": 0.0, "info": 0.0, "risk": 0.0, "causal": 0.0}
+        elif terminal < 0:
+            return {"goal": 0.0, "trust": 0.0, "info": 0.0, "risk": abs(terminal), "causal": 0.0}
     state = view_state.get("current_state") or {}
-    mandatory_ids = [sid for sid, p in state.get("stakeholder_private", {}).items() if p.get("mandatory")]
-    approval_score = 0.0
-    if mandatory_ids:
-        approvals = [state["stakeholder_private"][sid]["approval"] for sid in mandatory_ids]
-        approval_score = min(1.0, sum(approvals) / len(approvals))
-    constraints = list(state.get("hidden_constraints", {}).values())
-    constraint_score = sum(1 for c in constraints if c.get("resolved")) / len(constraints) if constraints else 0.0
-    violations = state.get("feasibility_state", {}).get("violations", [])
-    penalty = min(0.20, 0.05 * len(violations))
-    feasibility_score = max(0.0, 1.0 - penalty)
-    trusts = [p["trust"] for p in state.get("stakeholder_private", {}).values()]
-    mark_penalty = sum(0.03 * len(p.get("permanent_marks", [])) for p in state.get("stakeholder_private", {}).values())
-    average_trust = sum(trusts) / len(trusts) if trusts else 0.0
-    relationship_score = max(0.0, min(1.0, average_trust - mark_penalty))
-    max_rounds = state.get("max_rounds", 20)
-    round_num = state.get("round_number", 0)
-    efficiency_score = max(0.1, 1.0 - ((round_num / max_rounds) ** 1.25) * 0.45) if max_rounds > 0 else 0.0
-    return {
-        "approval_completeness": approval_score,
-        "constraint_satisfaction": constraint_score,
-        "term_feasibility": feasibility_score,
-        "relationship_durability": relationship_score,
-        "efficiency": efficiency_score,
-    }
+    positive_masses = [
+        belief.get("positive_mass", 0.5)
+        for belief in state.get("beliefs", {}).values()
+    ]
+    avg_belief = sum(positive_masses) / max(len(positive_masses), 1)
+    blockers = list(observation.get("active_blockers", []))
+    goal = avg_belief * (1.0 - 0.15 * len(blockers))
+    trust = avg_belief * (1.0 - 0.05 * len(blockers))
+    risk = max(0.0, 1.0 - avg_belief - 0.1 * len(blockers))
+    info_dim = 0.5
+    causal = 0.5
+    return {"goal": goal, "trust": trust, "info": info_dim, "risk": risk, "causal": causal}
+
+
+V3_REWARD_WEIGHTS = {
+    "goal": 0.25,
+    "trust": 0.20,
+    "info": 0.20,
+    "risk": 0.20,
+    "causal": 0.15,
+}
 
 
 def _build_score_card(view_state: Dict[str, Any]) -> str:
@@ -492,9 +503,21 @@ def _build_score_card(view_state: Dict[str, Any]) -> str:
     current_score = view_state.get("last_score", 0.0)
     score_delta = view_state.get("score_delta")
     done = observation.get("done", False)
+    info = view_state.get("last_info", {})
+    terminal_outcome = info.get("terminal_outcome", "")
     if done:
-        return ("<div class='complete-card'><h2>🎉 Deal Closed!</h2>"
-                f"<div class='final-score'>{current_score:.2f}</div><p>Final Score</p></div>")
+        if "deal_closed" in terminal_outcome:
+            outcome_label = "🎉 Deal Closed!"
+        elif "veto" in terminal_outcome:
+            outcome_label = "⚠️ Deal Vetoed"
+        elif "timeout" in terminal_outcome or "max_rounds" in terminal_outcome:
+            outcome_label = "⏱️ Deal Timed Out"
+        else:
+            outcome_label = "🏁 Deal Ended"
+        return (
+            f"<div class='complete-card'><h2>{outcome_label}</h2>"
+            f"<div class='final-score'>{current_score:.2f}</div><p>Final Score</p></div>"
+        )
     delta_html = ""
     if score_delta is not None:
         sign = "+" if score_delta >= 0 else ""
@@ -506,10 +529,10 @@ def _build_score_card(view_state: Dict[str, Any]) -> str:
         tags = "".join(f"<span class='blocker-tag'>⚠️ {_escape(b)}</span>" for b in blockers)
         blocker_html = f"<div style='margin-top:8px;'>{tags}</div>"
     breakdown = _compute_score_breakdown(view_state)
-    weights = CCIGrader.WEIGHTS
+    weights = V3_REWARD_WEIGHTS
     breakdown_items = []
     for key, weight in weights.items():
-        label = key.replace("_", " ").title()
+        label = key.title()
         value = breakdown.get(key, 0.0)
         pct = int(value * 100)
         cls = "high" if pct >= 70 else "med" if pct >= 40 else "low"

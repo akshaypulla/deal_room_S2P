@@ -35,8 +35,8 @@ GUIDE_DATA = {
             "concept": "Clear the highest-leverage commercial blocker with a relevant artifact.",
             "action": {
                 "action_type": "send_document",
-                "target": "finance",
-                "target_ids": ["finance"],
+                "target": "Finance",
+                "target_ids": ["Finance"],
                 "message": "Here is the ROI model with explicit payback assumptions and downside cases.",
                 "documents": [{"type": "roi_model", "specificity": "high"}],
             },
@@ -59,8 +59,8 @@ GUIDE_DATA = {
             "concept": "Sequencing matters: legal review cannot progress without review-ready compliance artifacts.",
             "action": {
                 "action_type": "send_document",
-                "target": "legal_compliance",
-                "target_ids": ["legal_compliance"],
+                "target": "Legal",
+                "target_ids": ["Legal"],
                 "message": "Here is the DPA with GDPR-aligned privacy commitments and review-ready clauses.",
                 "documents": [{"type": "dpa", "specificity": "high"}],
             },
@@ -83,8 +83,8 @@ GUIDE_DATA = {
             "concept": "Ambiguous signals become a known hard constraint only after the right evidence arrives.",
             "action": {
                 "action_type": "send_document",
-                "target": "operations",
-                "target_ids": ["operations"],
+                "target": "Operations",
+                "target_ids": ["Operations"],
                 "message": "Here is the implementation timeline with milestones, owners, and delivery guardrails.",
                 "documents": [{"type": "implementation_timeline", "specificity": "high"}],
             },
@@ -107,8 +107,8 @@ GUIDE_DATA = {
             "concept": "Not every blocker is about product or price; process compliance matters too.",
             "action": {
                 "action_type": "send_document",
-                "target": "procurement",
-                "target_ids": ["procurement"],
+                "target": "Procurement",
+                "target_ids": ["Procurement"],
                 "message": "Here is the supplier onboarding packet including process, insurance, and vendor details.",
                 "documents": [{"type": "vendor_packet", "specificity": "high"}],
             },
@@ -132,7 +132,7 @@ GUIDE_DATA = {
             "action": {
                 "action_type": "group_proposal",
                 "target": "all",
-                "target_ids": ["finance", "legal_compliance", "operations", "procurement"],
+                "target_ids": ["Finance", "Legal", "Operations", "Procurement"],
                 "message": "I believe we have enough alignment to move to final approval on concrete, reviewable terms.",
                 "proposed_terms": {
                     "price": 180000,
