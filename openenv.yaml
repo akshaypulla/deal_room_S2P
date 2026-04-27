@@ -1,12 +1,7 @@
-name: deal-room-S2P
+name: deal-room
 version: "1.0.0"
-description: "LLM agent navigates multi-stakeholder enterprise contract negotiation — building organizational consensus through coalition-building, veto avoidance, and strategic information management. The environment implements a causal graph inference challenge where stakeholder influence relationships are hidden, requiring the agent to infer committee dynamics through noisy observations."
+description: "LLM agent navigates multi-stakeholder enterprise contract negotiation — building organizational consensus through coalition-building, veto avoidance, and strategic information management"
 author: "akshaypulla"
-additional_metadata:
-  colorFrom: blue
-  colorTo: green
-  environment_type: negotiation
-  llm_fine_tuning: true
 tags:
   - openenv
   - negotiation
@@ -14,168 +9,26 @@ tags:
   - multi-stakeholder
   - real-world
   - rl
-  - llm-training
-  - grpo
-  - ppo
 tasks:
   - id: aligned
-    description: "Low-friction enterprise deal — cooperative stakeholders, standard document sequencing (DPA, ROI, security cert), engagement order matters less"
+    description: "Low-friction enterprise deal — correct document sequencing and engagement order"
     difficulty: easy
-    max_steps: 10
-    reward_range: [-1.5, 1.5] per step + terminal [-1.0, +1.0]
-    scenario_params:
-      edge_density: 0.30
-      intra_cluster_boost: 0.40
-      cross_cluster_penalty: 0.20
-      authority_edge_prob: 0.85
-      deliberation_steps: 3
-      veto_grace_rounds: 0
+    max_steps: 8
+    reward_range: [0.0, 1.0]
   - id: conflicted
-    description: "CTO-CFO tension, Legal-Procurement coalition — agent must sequence coalition-building correctly, CVaR risk moderate"
+    description: "CTO-CFO tension, Legal-Procurement alliance — coalition sequencing is primary skill"
     difficulty: medium
     max_steps: 10
-    reward_range: [-1.5, 1.5] per step + terminal [-1.0, +1.0]
-    scenario_params:
-      edge_density: 0.45
-      intra_cluster_boost: 0.50
-      cross_cluster_penalty: 0.15
-      authority_edge_prob: 0.80
-      deliberation_steps: 3
-      veto_grace_rounds: 0
+    reward_range: [0.0, 1.0]
   - id: hostile_acquisition
-    description: "Post-acquisition authority shift, new compliance requirements — high CVaR risk, Legal veto likely without proper documentation, adaptive mapping under pressure required"
+    description: "Post-acquisition authority shift, new compliance requirements — adaptive mapping under pressure"
     difficulty: hard
     max_steps: 10
-    reward_range: [-1.5, 1.5] per step + terminal [-1.0, +1.0]
-    scenario_params:
-      edge_density: 0.60
-      intra_cluster_boost: 0.25
-      cross_cluster_penalty: 0.05
-      authority_edge_prob: 0.65
-      deliberation_steps: 4
-      veto_grace_rounds: 1
-reward_range: [-1.5, 1.5] per step + terminal [-1.0, +1.0] (approximate)
+    reward_range: [0.0, 1.0]
+reward_range: [0.0, 1.0]
 observation_space:
   type: object
-  description: "Dynamic stakeholder roster with engagement levels (POMDP noise σ=0.10), weak signals (30% random drop), cross-stakeholder echoes (influence cascades, ~70% recall), discovered constraints, veto precursors (warnings), and deal-stage progress. Hidden: causal graph, true beliefs, CVaR thresholds."
-  signals:
-    - "engagement_level (noisy proxy for belief change, σ=0.10)"
-    - "weak_signals (indirect blocker hints, 30% randomly dropped)"
-    - "cross_stakeholder_echoes (influence cascades, ~70% recall)"
-    - "veto_precursors (warning signals)"
-    - "stakeholder_messages (20% corrupted to placeholder)"
+  description: "Dynamic stakeholder roster, weak signals, discovered constraints, noisy approval proxies, and deal-stage progress"
 action_space:
   type: object
-  description: "8 action types: send_document, direct_message, group_proposal, concession, exec_escalation, submit_proposal, redline_clause, acknowledge_stage. Each with dynamic target_ids, optional artifacts, structured offer terms. Pipe-delimited format: send_document <target> <doc_type> | <message>"
-reward_structure:
-  dimensions:
-    - name: goal
-      weight: 0.25
-      description: "Deal progress: weighted approval delta + blocker resolution + CVaR headroom change"
-      formula: "0.5*approval_score + 0.3*blocker_score + 0.2*veto_score, squashed via zero-centered sigmoid"
-    - name: trust
-      weight: 0.20
-      description: "Trustworthy mass delta for targeted stakeholder"
-      formula: "0.6*positive_mass_delta + 0.4*trustworthy_mass_delta, squashed"
-    - name: info
-      weight: 0.20
-      description: "Entropy reduction across committee beliefs (normalized by log2(6))"
-      formula: "mean((H_before - H_after) / LOG2_6), squashed"
-    - name: risk
-      weight: 0.20
-      description: "CVaR improvement for risk-averse stakeholders (λ_risk > 0.30)"
-      formula: "mean((CVaR_before - CVaR_after) / CVaR_before), squashed"
-    - name: causal
-      weight: 0.15
-      description: "Betweenness centrality of targeted node in hidden causal graph"
-      formula: "centrality / max_possible, squashed"
-  terminal_rewards:
-    deal_closed: 1.0
-    hard_veto: -1.0
-    soft_veto: -0.8
-    stage_regression: -0.75
-    timeout: -0.5
-  step_penalty: -0.002
-  lookahead_cost: 0.07
-  reward_scale: 1.5
-  reward_gain: 3.0
-  milestone_bonuses:
-    stage_advance: 0.5
-    blocker_resolved: 0.15
-    dpa_to_legal_when_risk: 0.3
-    security_cert: 0.2
-    veto_precursor_added: -0.2
-  penalties:
-    non_progress: -0.1
-    diversity_reward: 0.05
-  discount_factor: 0.3
-  multi_step_depth: 2
-  n_seed_samples: 3
-  num_generations: 16
-  entropy_coef: 0.01
-key_properties:
-  p1_hidden_causal_graph: "Causal graph (G) is hidden from agent — must be inferred from noisy signals"
-  p2_reset_regeneration: "Each reset() samples new causal graph structure (unique per episode)"
-  p3_cvar_veto: "Stakeholders veto when CVaR > tau even if expected utility > 0 (P3: α=0.95 for Legal)"
-  p4_independent_dims: "5 reward dimensions computed independently — no single-dimension hacking"
-  p5_lookahead_cost: "Lookahead has exact 0.07 cost penalty — no free information"
-  p6_noise_not_cancellable: "Engagement noise (σ=0.10) cannot be perfectly cancelled — true beliefs never revealed"
-  p7_echoes: "Cross-stakeholder echoes (~70% recall) show influence cascades through hidden graph"
-  p8_weak_signals: "Weak signals provide indirect hints about blockers (30% randomly dropped)"
-  p9_target_variance: "Causal score varies with target's graph position — different targets = different influence"
-  p10_unique_graphs: "Every reset produces uniquely identifiable causal graph (via graph seed) — replayable"
-  p11_zero_centered_squash: "Reward uses zero-centered sigmoid _squash() — neutral actions get 0, not 0.5"
-  p12_milestone_bonuses: "Immediate bonuses for stage advance (+0.5), blocker resolve (+0.15), DPA (+0.3)"
-  p13_non_progress_penalty: "-0.1 penalty when no belief delta > 0.02 — penalizes safe inaction"
-  p14_diversity_reward: "+0.05 when ≥3 unique actions in last 10 — prevents action collapse"
-  p15_pomdp_corruption: "POMDP noise: σ=0.10 engagement, 30% weak signal drop, 20% message corrupt"
-  p16_multi_step_generation: "Training generates depth=2 action chains — model learns multi-step strategy"
-  p17_hostile_grace_rounds: "hostile_acquisition has 1 veto grace round — allows compliance establishment"
-  p18_multi_seed_eval: "3-seed averaging per completion — eliminates environment luck from advantage"
-  p19_entropy_encouragement: "entropy_coef=0.01 — light pressure against premature convergence"
-stakeholders:
-  - id: Legal
-    veto_power: true
-    alpha: 0.95
-    tau: 0.10
-    lambda_risk: 0.70
-    concerns: ["compliance_breach", "data_protection_failure"]
-  - id: Finance
-    veto_power: true
-    alpha: 0.90
-    tau: 0.15
-    lambda_risk: 0.50
-    concerns: ["payment_default", "cost_overrun"]
-  - id: TechLead
-    veto_power: false
-    alpha: 0.80
-    tau: 0.25
-    lambda_risk: 0.30
-    concerns: ["implementation_failure", "integration_complexity"]
-  - id: Procurement
-    veto_power: false
-    alpha: 0.85
-    tau: 0.20
-    lambda_risk: 0.45
-    concerns: ["contract_enforceability", "vendor_viability"]
-  - id: Operations
-    veto_power: false
-    alpha: 0.80
-    tau: 0.30
-    lambda_risk: 0.35
-    concerns: ["operational_disruption", "timeline_delay"]
-  - id: ExecSponsor
-    veto_power: true
-    alpha: 0.70
-    tau: 0.40
-    lambda_risk: 0.25
-    concerns: ["reputational_damage", "strategic_misalignment"]
-deal_stages:
-  - evaluation
-  - negotiation
-  - legal_review
-  - final_approval
-  - closed
-stage_gates:
-  advance_threshold: 0.65
-  stall_threshold: 0.40
+  description: "8 action types with dynamic target_ids, optional artifacts, structured offer terms, and natural-language negotiation moves"
