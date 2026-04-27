@@ -315,7 +315,7 @@ def parse_action_text(text: str) -> DealRoomAction:
                     proposed_terms={term_key: term_value},
                 )
             elif action_type in ("group_proposal", "group_proposal_pipe"):
-                message = (groups[1 if action_type == "group_proposal" else 2]).strip()[:500]
+                message = (groups[1 if action_type == "group_proposal" else 1]).strip()[:500]
                 return DealRoomAction(
                     action_type="group_proposal",
                     target="all",
@@ -323,7 +323,7 @@ def parse_action_text(text: str) -> DealRoomAction:
                     message=message,
                 )
             elif action_type in ("exec_escalation", "exec_escalation_pipe"):
-                message = (groups[1 if action_type == "exec_escalation" else 2]).strip()[:500]
+                message = (groups[1 if action_type == "exec_escalation" else 1]).strip()[:500]
                 return DealRoomAction(
                     action_type="exec_escalation",
                     target="ExecSponsor",
