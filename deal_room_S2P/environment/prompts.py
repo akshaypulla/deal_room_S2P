@@ -155,38 +155,10 @@ def build_situation_prompt(obs: DealRoomObservation) -> str:
 ACTION_PATTERNS = [
     (
         re.compile(
-            r"^\s*send_document\s+(\w+)\s+(\w+)(?:\s+([^#]+))?(?:\s*###\s*)?$",
+            r"^\s*send_document\s+(\w+)\s+(\w+)(?:\s+([^#|]+))?(?:\s*###\s*)?$",
             re.IGNORECASE | re.DOTALL,
         ),
         "send_document",
-    ),
-    (
-        re.compile(
-            r"^\s*direct_message\s+(\w+)\s+(.+?)\s*###\s*$",
-            re.IGNORECASE | re.DOTALL,
-        ),
-        "direct_message",
-    ),
-    (
-        re.compile(
-            r"^\s*concession\s+(\w+)\s+(\w+)=([\d.]+)\s*###\s*$",
-            re.IGNORECASE,
-        ),
-        "concession",
-    ),
-    (
-        re.compile(
-            r"^\s*group_proposal\s+(.+?)\s*###\s*$",
-            re.IGNORECASE | re.DOTALL,
-        ),
-        "group_proposal",
-    ),
-    (
-        re.compile(
-            r"^\s*exec_escalation\s+(.+?)\s*###\s*$",
-            re.IGNORECASE | re.DOTALL,
-        ),
-        "exec_escalation",
     ),
     (
         re.compile(
@@ -222,6 +194,48 @@ ACTION_PATTERNS = [
             re.IGNORECASE | re.DOTALL,
         ),
         "exec_escalation_pipe",
+    ),
+    (
+        re.compile(
+            r"^\s*send_document\s+(\w+)\s+(\w+)\s+([^#|]+)\s*###\s*$",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "send_document",
+    ),
+    (
+        re.compile(
+            r"^\s*send_document\s+(\w+)\s+(\w+)\s*\|\s*(.+)$",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "send_document_pipe",
+    ),
+    (
+        re.compile(
+            r"^\s*direct_message\s+(\w+)\s+(.+?)\s*###\s*$",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "direct_message",
+    ),
+    (
+        re.compile(
+            r"^\s*concession\s+(\w+)\s+(\w+)=([\d.]+)\s*###\s*$",
+            re.IGNORECASE,
+        ),
+        "concession",
+    ),
+    (
+        re.compile(
+            r"^\s*group_proposal\s+(.+?)\s*###\s*$",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "group_proposal",
+    ),
+    (
+        re.compile(
+            r"^\s*exec_escalation\s+(.+?)\s*###\s*$",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "exec_escalation",
     ),
 ]
 
@@ -291,7 +305,7 @@ def parse_action_text(text: str) -> DealRoomAction:
                 )
             elif action_type in ("direct_message", "direct_message_pipe"):
                 target = _normalize_target(groups[1 if action_type == "direct_message" else 2])
-                message = (groups[2 if action_type == "direct_message" else 2]).strip()[:500]
+                message = (groups[2 if action_type == "direct_message_pipe" else 1]).strip()[:500]
                 return DealRoomAction(
                     action_type="direct_message",
                     target=target,
