@@ -13,7 +13,9 @@ import random
 from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 from deal_room_S2P.environment.prompts import parse_action_text
 
-PARSE_PENALTY = -0.3       # hard penalty for invalid output format (start -1.0, raise later)
+PARSE_PENALTY = -0.5       # penalty for invalid output format
+DIVERSITY_BONUS = 0.05     # reward for using a new action type in this batch
+DIVERSITY_PENALTY = -0.03  # penalty for repeating the same action type
 MAX_ROLLOUT_STEPS = 2      # 2 steps: model action + 1 heuristic (not 3 — keeps credit clean)
 ROLLOUT_WEIGHT = 0.3       # 0.3 discount makes reward reflect model's action more than environment
 
@@ -48,6 +50,7 @@ class MinimalDealRoomReward:
         self.n_rollout_steps = n_rollout_steps
         self._parse_fails = 0
         self._last_fail_text = None
+        self._batch_action_types = []  # track action types per batch for diversity
 
     def __call__(self, prompts, completions, **kwargs):
         # ONE base seed + ONE task for ALL completions in this batch
@@ -58,12 +61,27 @@ class MinimalDealRoomReward:
         task = TASK_POOL[idx]
         self._batch_ctr += 1  # ← advances ONCE per batch, never inside loop
 
+        # Track action types this batch for diversity scoring
+        self._batch_action_types = []
+
         rewards = []
         for completion in completions:
             r = self._score(completion.strip(), seed, task)
             rewards.append(r)
 
         return rewards
+
+    def _diversity_adjust(self, action):
+        """Apply diversity bonus/penalty based on action type usage in this batch."""
+        at = action.action_type if action else None
+        if at is None:
+            return 0.0
+
+        if at not in self._batch_action_types:
+            self._batch_action_types.append(at)
+            return DIVERSITY_BONUS  # reward new action type
+        else:
+            return DIVERSITY_PENALTY  # penalty for repeating
 
     def _score(self, completion: str, seed: int, task: str) -> float:
         env = DealRoomV3S2P()
@@ -79,8 +97,8 @@ class MinimalDealRoomReward:
             self._last_fail_text = completion[:100]
             return PARSE_PENALTY  # hard penalty — model MUST learn format
 
-        # ── 2-step rollout: model action + 1 heuristic ─────────────────────
-        cumulative = 0.0
+        # ── Diversity adjustment ─────────────────────────────────────────────
+        cumulative = self._diversity_adjust(action)
         weight = 1.0
         rng = random.Random(seed + 99999)
 
