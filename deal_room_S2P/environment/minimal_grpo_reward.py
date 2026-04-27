@@ -103,10 +103,23 @@ class MinimalDealRoomReward:
 
     def _parse_action(self, text: str):
         """Returns DealRoomAction or None on parse failure (no silent fallback)."""
+        text = self._clean_output(text)
         try:
             return parse_action_text(text)
         except Exception:
             return None  # ← NO fallback, NO safe default
+
+    def _clean_output(self, text: str) -> str:
+        """Strip EOS tokens and find the first valid action line (not last)."""
+        text = text.replace("</s>", "").replace("EOS", "").replace("<|endoftext|>", "")
+        lines = text.strip().split("\n")
+        valid_starts = ("send_document", "direct_message", "concession",
+                        "group_proposal", "exec_escalation", "submit_proposal")
+        for line in lines:
+            line = line.strip()
+            if line.startswith(valid_starts):
+                return line
+        return lines[-1].strip() if lines else ""
 
     def _terminal_bonus(self, env) -> float:
         outcome = env._state.terminal_outcome if env._state else ''
