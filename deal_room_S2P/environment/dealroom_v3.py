@@ -1161,7 +1161,7 @@ class DealRoomV3S2P:
             elif "security_cert" in doc_names:
                 bonus += 0.2
 
-        precursors_before_keys = set(self._compute_veto_precursors(state_before).keys()) if state_before else set()
+        precursors_before_keys = set(self._compute_veto_precursors(None).keys()) if state_before else set()
         precursors_after_keys = set(state_after.active_blockers)
         if len(precursors_after_keys) > len(precursors_before_keys):
             bonus -= 0.2

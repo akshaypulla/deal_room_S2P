@@ -44,6 +44,10 @@ ENV PORT=7860
 
 RUN mkdir -p /opt/hf-home
 
+# Install Playwright for E2E tests
+RUN pip install playwright pytest pytest-asyncio && \
+    playwright install chromium --with-deps || playwright install chromium
+
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:7860/health || exit 1
 
