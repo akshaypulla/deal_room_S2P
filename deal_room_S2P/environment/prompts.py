@@ -176,6 +176,20 @@ ACTION_PATTERNS = [
     ),
     (
         re.compile(
+            r"^\s*concession\s+(\w+)\s*\|\s*(\w+)=([\d.]+)(\s+.*)?$",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "concession_pipe",
+    ),
+    (
+        re.compile(
+            r"^\s*concession\s+(\w+)\s+(\w+)=([\d.]+)(\s+.*)?$",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "concession_pipe",
+    ),
+    (
+        re.compile(
             r"^\s*concession\s+(\w+)\s*\|\s*(\w+)\s*=\s*([\d.]+)(\s+.*)?$",
             re.IGNORECASE | re.DOTALL,
         ),
@@ -320,21 +334,41 @@ def parse_action_text(text: str) -> DealRoomAction:
                     message=message,
                 )
             elif action_type in ("concession", "concession_pipe"):
-                target = _normalize_target(groups[1 if action_type == "concession" else 2])
                 if action_type == "concession":
+                    target = _normalize_target(groups[1])
                     term_key = groups[1].strip().lower()
                     term_value = float(groups[2])
                     message = ""
                 else:
-                    if '=' in groups[2]:
+                    if len(groups) == 3:
+                        # OLD pipe format (no trailing message): groups=('stakeholder', 'term=value')
                         parts = groups[2].strip().split('=', 1)
                         term_key = parts[0].strip().lower()
-                        term_value = float(parts[1].strip())
-                        message = (groups[3].strip() if groups[3] else "")[:500]
+                        term_value = float(parts[1].strip()) if len(parts) > 1 else 0.0
+                        message = ""
+                        target = _normalize_target(groups[1])
+                    elif '=' in groups[2]:
+                        # NEW space-separated or OLD pipe: groups[1]=stakeholder, groups[2]='liability_cap', groups[3]=2000000, (optional) groups[4]=message
+                        # For OLD pipe: groups[2]='liability_cap=2000000' (has = within)
+                        # For NEW space-separated: groups[2]='liability_cap', groups[3]='2000000'
+                        if groups[3] and groups[3].strip().isdigit():
+                            # NEW format: groups[2]=term, groups[3]=value, groups[4]=message
+                            term_key = groups[2].strip().lower()
+                            term_value = float(groups[3].strip())
+                            message = groups[4].strip()[:500] if len(groups) > 4 and groups[4] else ""
+                        else:
+                            # OLD format with embedded = in groups[2]
+                            parts = groups[2].strip().split('=', 1)
+                            term_key = parts[0].strip().lower()
+                            term_value = float(parts[1].strip())
+                            message = groups[3].strip()[:500] if groups[3] else ""
+                        target = _normalize_target(groups[1])
                     else:
+                        # Fallback (shouldn't reach here for valid input)
                         term_key = groups[1].strip().lower()
-                        term_value = float(groups[2].strip())
-                        message = (groups[3].strip() if groups[3] else "")[:500]
+                        term_value = float(groups[2].strip()) if groups[2] else 0.0
+                        message = groups[3].strip()[:500] if len(groups) > 3 and groups[3] else ""
+                        target = _normalize_target(groups[1])
                 return DealRoomAction(
                     action_type="concession",
                     target=target,
