@@ -32,8 +32,15 @@ from models import DealRoomAction
 
 LOG2_6 = math.log(6) / math.log(2)
 LOOKAHEAD_COST = 0.07
-REWARD_SCALE = 2.0
-REWARD_GAIN = 1.5
+REWARD_SCALE = 1.5
+REWARD_GAIN = 3.0
+
+
+def _squash(raw: float, target_range: float = 1.5) -> float:
+    """Map raw score (can be positive/negative) to [-target_range, target_range]
+    using a steep sigmoid that passes through 0 at raw=0.
+    """
+    return target_range * (2.0 / (1.0 + np.exp(-REWARD_GAIN * raw)) - 1.0)
 
 
 def _entropy_base2(values: np.ndarray) -> float:
@@ -217,7 +224,7 @@ class UtteranceScorer:
         )
 
         raw = 0.50 * approval_score + 0.30 * blocker_score + 0.20 * veto_score
-        return float(0.5 + 0.5 * np.tanh((REWARD_GAIN * raw) * REWARD_SCALE))
+        return float(_squash(raw, target_range=REWARD_SCALE))
 
     def _score_trust(
         self,
@@ -226,7 +233,7 @@ class UtteranceScorer:
         targeted_ids: List[str],
     ) -> float:
         if not targeted_ids:
-            return 0.5
+            return 0.0
         deltas = []
         for sid in targeted_ids:
             b_before = beliefs_before.get(sid)
@@ -239,9 +246,9 @@ class UtteranceScorer:
             ) - b_before.distribution.get("trustworthy", 0)
             deltas.append(0.6 * pm_delta + 0.4 * tw_delta)
         if not deltas:
-            return 0.5
+            return 0.0
         mean_delta = sum(deltas) / len(deltas)
-        return float(0.5 + 0.5 * np.tanh((REWARD_GAIN * mean_delta) * REWARD_SCALE))
+        return float(_squash(mean_delta, target_range=REWARD_SCALE))
 
     def _score_info(
         self,
@@ -258,9 +265,9 @@ class UtteranceScorer:
             h_after = _entropy_base2(np.array(list(b_after.distribution.values())))
             reductions.append((h_before - h_after) / LOG2_6)
         if not reductions:
-            return 0.5
+            return 0.0
         mean_reduction = sum(reductions) / len(reductions)
-        return float(0.5 + 0.5 * np.tanh((REWARD_GAIN * mean_reduction) * REWARD_SCALE))
+        return float(_squash(mean_reduction, target_range=REWARD_SCALE))
 
     def _score_risk(
         self,
@@ -279,9 +286,9 @@ class UtteranceScorer:
                 if cvar_b > 1e-8:
                     improvements.append((cvar_b - cvar_a) / cvar_b)
         if not improvements:
-            return 0.5
+            return 0.0
         mean_imp = sum(improvements) / len(improvements)
-        return float(0.5 + 0.5 * np.tanh((REWARD_GAIN * mean_imp) * REWARD_SCALE))
+        return float(_squash(mean_imp, target_range=REWARD_SCALE))
 
     def _score_causal(
         self,
@@ -293,11 +300,12 @@ class UtteranceScorer:
         edges = getattr(graph, "edges", [])
         nodes = getattr(graph, "nodes", [])
         if not edges or len(nodes) <= 2:
-            return 0.5
+            return 0.0
         centrality = get_betweenness_centrality(graph, targeted_ids[0])
         n = len(nodes)
         max_possible = ((n - 1) * (n - 2)) if n > 2 else 1.0
-        return float(centrality / max_possible if max_possible > 0 else 0.0)
+        raw_centrality = centrality / max_possible if max_possible > 0 else 0.0
+        return float(_squash(raw_centrality, target_range=REWARD_SCALE))
 
     def _compute_cvar(
         self,

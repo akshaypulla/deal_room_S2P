@@ -188,6 +188,41 @@ ACTION_PATTERNS = [
         ),
         "exec_escalation",
     ),
+    (
+        re.compile(
+            r"^\s*(send_document)\s+(\w+)\s+(\w+)\s*\|\s*(.+)$",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "send_document_pipe",
+    ),
+    (
+        re.compile(
+            r"^\s*(direct_message)\s+(\w+)\s*\|\s*(.+)$",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "direct_message_pipe",
+    ),
+    (
+        re.compile(
+            r"^\s*(concession)\s+(\w+)\s*\|\s*(.+)$",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "concession_pipe",
+    ),
+    (
+        re.compile(
+            r"^\s*(group_proposal)\s*\|\s*(.+)$",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "group_proposal_pipe",
+    ),
+    (
+        re.compile(
+            r"^\s*(exec_escalation)\s*\|\s*(.+)$",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "exec_escalation_pipe",
+    ),
 ]
 
 
@@ -243,10 +278,10 @@ def parse_action_text(text: str) -> DealRoomAction:
         m = pattern.match(text)
         if m:
             groups = m.groups()
-            if action_type == "send_document":
-                target = _normalize_target(groups[0])
-                doc_type = _validate_doc_type(groups[1])
-                message = (groups[2] or "").strip()[:500]
+            if action_type in ("send_document", "send_document_pipe"):
+                target = _normalize_target(groups[1 if action_type == "send_document" else 2])
+                doc_type = _validate_doc_type(groups[2 if action_type == "send_document" else 3])
+                message = (groups[3 if action_type == "send_document_pipe" else 2] or "").strip()[:500]
                 return DealRoomAction(
                     action_type="send_document",
                     target=target,
@@ -254,19 +289,24 @@ def parse_action_text(text: str) -> DealRoomAction:
                     message=message or f"Sending {doc_type} document to {target}.",
                     documents=[{"type": doc_type, "name": doc_type.upper()}],
                 )
-            elif action_type == "direct_message":
-                target = _normalize_target(groups[0])
-                message = groups[1].strip()[:500]
+            elif action_type in ("direct_message", "direct_message_pipe"):
+                target = _normalize_target(groups[1 if action_type == "direct_message" else 2])
+                message = (groups[2 if action_type == "direct_message" else 3]).strip()[:500]
                 return DealRoomAction(
                     action_type="direct_message",
                     target=target,
                     target_ids=[target] if target != "all" else STAKEHOLDER_NAMES,
                     message=message,
                 )
-            elif action_type == "concession":
-                target = _normalize_target(groups[0])
-                term_key = groups[1].strip().lower()
-                term_value = float(groups[2])
+            elif action_type in ("concession", "concession_pipe"):
+                target = _normalize_target(groups[1 if action_type == "concession" else 2])
+                if action_type == "concession":
+                    term_key = groups[1].strip().lower()
+                    term_value = float(groups[2])
+                else:
+                    parts = groups[2].strip().split("=")
+                    term_key = parts[0].strip().lower()
+                    term_value = float(parts[1]) if len(parts) > 1 else 0.0
                 return DealRoomAction(
                     action_type="concession",
                     target=target,
@@ -274,16 +314,16 @@ def parse_action_text(text: str) -> DealRoomAction:
                     message=f"Concession offered on {term_key}.",
                     proposed_terms={term_key: term_value},
                 )
-            elif action_type == "group_proposal":
-                message = groups[0].strip()[:500]
+            elif action_type in ("group_proposal", "group_proposal_pipe"):
+                message = (groups[1 if action_type == "group_proposal" else 2]).strip()[:500]
                 return DealRoomAction(
                     action_type="group_proposal",
                     target="all",
                     target_ids=STAKEHOLDER_NAMES,
                     message=message,
                 )
-            elif action_type == "exec_escalation":
-                message = groups[0].strip()[:500]
+            elif action_type in ("exec_escalation", "exec_escalation_pipe"):
+                message = (groups[1 if action_type == "exec_escalation" else 2]).strip()[:500]
                 return DealRoomAction(
                     action_type="exec_escalation",
                     target="ExecSponsor",

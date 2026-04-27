@@ -5,12 +5,12 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Protocol, Sequence
+from typing import Any, Callable, Dict, List, Optional, Protocol, Sequence, Tuple
 
 import numpy as np
 
 from deal_room_S2P.curriculum.adaptive_generator import AdaptiveCurriculumGenerator
-from deal_room_S2P.environment.constants import REWARD_WEIGHTS
+from deal_room_S2P.environment.constants import REWARD_WEIGHTS, TERMINAL_REWARDS_V2
 from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 from models import DealRoomAction, DealRoomObservation, LookaheadRequest
 
@@ -71,6 +71,7 @@ class EpisodeTrajectory:
     lookahead_diagnostics: List[Dict[str, Any]] = field(default_factory=list)
     weighted_reward: float = 0.0
     seed: Optional[int] = None
+    multi_step_actions: List[List[DealRoomAction]] = field(default_factory=list)
 
 
 class RandomPolicyAdapter:
@@ -326,6 +327,9 @@ class GRPOTrainer:
         model: Optional[str] = None,
         env: Optional[DealRoomV3S2P] = None,
         config: Optional[Dict[str, Any]] = None,
+        num_generations: int = 16,
+        discount: float = 0.3,
+        n_seed_samples: int = 3,
     ):
         if model is not None:
             model_id = model
@@ -335,6 +339,9 @@ class GRPOTrainer:
         self.learning_rate = learning_rate
         self.grpo_clip = grpo_clip
         self.entropy_coef = entropy_coef
+        self.num_generations = num_generations
+        self.discount = discount
+        self.n_seed_samples = n_seed_samples
         self.reward_weights = reward_weights or [
             REWARD_WEIGHTS[dimension] for dimension in REWARD_DIMENSIONS
         ]
@@ -366,6 +373,7 @@ class GRPOTrainer:
         max_steps: int = 10,
         task_id: Optional[str] = None,
         seed: Optional[int] = None,
+        multi_step_depth: int = 2,
     ) -> EpisodeTrajectory:
         env = env or DealRoomV3S2P()
         adapter = policy_adapter or self.policy_adapter
@@ -385,38 +393,51 @@ class GRPOTrainer:
 
         for _ in range(max_steps):
             trajectory.observations.append(observation)
-            action = adapter.act(observation, self.rng)
-            trajectory.actions.append(action)
-            trajectory.lookahead_used.append(action.lookahead is not None)
 
-            observation, reward, done, info = env.step(action)
-            reward_components = info.get("reward_components") or {}
-            reward_vector = [
-                float(reward_components.get(dimension, reward))
-                for dimension in REWARD_DIMENSIONS
-            ]
-            trajectory.rewards.append(reward_vector)
-            trajectory.scalar_rewards.append(float(reward))
-            trajectory.prediction_accuracies.append(
-                float(info.get("prediction_accuracy", 0.0))
-            )
-            trajectory.lookahead_diagnostics.append(
-                {
-                    "predicted_deltas": dict(
-                        info.get("lookahead_predicted_deltas") or {}
-                    ),
-                    "predicted_responses": dict(
-                        info.get("lookahead_predicted_responses") or {}
-                    ),
-                    "cvar_impact": dict(info.get("lookahead_cvar_impact") or {}),
-                }
-            )
+            multi_step_batch: List[DealRoomAction] = []
+            current_obs = observation
+            for step_idx in range(multi_step_depth):
+                action = adapter.act(current_obs, self.rng)
+                if step_idx == 0:
+                    trajectory.actions.append(action)
+                multi_step_batch.append(action)
 
-            if done:
-                trajectory.terminal_outcome = str(
-                    info.get("terminal_outcome") or "max_rounds"
+                current_obs, reward, done, info = env.step(action)
+                reward_components = info.get("reward_components") or {}
+                reward_vector = [
+                    float(reward_components.get(dimension, reward))
+                    for dimension in REWARD_DIMENSIONS
+                ]
+                trajectory.rewards.append(reward_vector)
+                trajectory.scalar_rewards.append(float(reward))
+                trajectory.prediction_accuracies.append(
+                    float(info.get("prediction_accuracy", 0.0))
                 )
-                break
+                trajectory.lookahead_diagnostics.append(
+                    {
+                        "predicted_deltas": dict(
+                            info.get("lookahead_predicted_deltas") or {}
+                        ),
+                        "predicted_responses": dict(
+                            info.get("lookahead_predicted_responses") or {}
+                        ),
+                        "cvar_impact": dict(info.get("lookahead_cvar_impact") or {}),
+                    }
+                )
+
+                if done:
+                    trajectory.terminal_outcome = str(
+                        info.get("terminal_outcome") or "max_rounds"
+                    )
+                    trajectory.multi_step_actions.append(multi_step_batch)
+                    return trajectory
+
+            trajectory.multi_step_actions.append(multi_step_batch)
+            observation = current_obs
+
+            discounted_reward = sum(
+                r * (self.discount ** i) for i, r in enumerate(trajectory.scalar_rewards[-multi_step_depth:])
+            )
 
         trajectory.weighted_reward = float(sum(trajectory.scalar_rewards))
         return trajectory

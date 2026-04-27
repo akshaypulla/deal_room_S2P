@@ -6,7 +6,7 @@ import hashlib
 import os
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Set
 
 import numpy as np
 
@@ -47,7 +47,7 @@ def _init_obs_config():
 
     @dataclass
     class ObservationConfig:
-        engagement_noise_sigma: float = 0.03
+        engagement_noise_sigma: float = 0.05
         echo_recall_probability: float = 0.70
         weak_signal_hard_threshold: float = 0.12
         weak_signal_soft_lower: float = 0.08
@@ -55,6 +55,9 @@ def _init_obs_config():
         reference_injection_threshold: float = 0.10
         minimax_base_reference_target: float = 0.60
         engagement_history_window: int = 5
+        pomdp_noise_sigma: float = 0.10
+        weak_signal_drop_prob: float = 0.30
+        message_corrupt_prob: float = 0.20
 
     return ObservationConfig()
 
@@ -183,6 +186,7 @@ class ScenarioConfig:
     task_id: str
     max_rounds: int = 10
     seed: Optional[int] = None
+    veto_grace_rounds: int = 1
 
 
 class DealRoomV3S2P:
@@ -203,6 +207,7 @@ class DealRoomV3S2P:
         self._episode_id: str = ""
         self._veto_precursor_streaks: Dict[str, int] = {}
         self._use_llm_stakeholders = use_llm_stakeholders
+        self._action_history: List[str] = []
 
     @property
     def action_space(self) -> List[DealRoomAction]:
@@ -243,10 +248,12 @@ class DealRoomV3S2P:
         self, seed: Optional[int] = None, task_id: str = "aligned", **kwargs
     ) -> DealRoomObservation:
         self._rng = np.random.default_rng(seed)
-        self._scenario = ScenarioConfig(task_id=task_id, seed=seed)
+        grace_rounds = 1 if task_id == "hostile_acquisition" else 0
+        self._scenario = ScenarioConfig(task_id=task_id, seed=seed, veto_grace_rounds=grace_rounds)
         self._episode_id = str(uuid.uuid4())[:8]
         self._step_count = 0
         self._round_number = 0
+        self._action_history: List[str] = []
         self._lookahead_simulator = LookaheadSimulator(self._rng)
         self._veto_precursor_streaks = {sid: 0 for sid in STANDARD_STAKEHOLDERS}
 
@@ -433,6 +440,11 @@ class DealRoomV3S2P:
         reward_components = score.to_dict()
 
         reward += STEP_PENALTY
+        reward = self._apply_milestone_bonuses(
+            reward, action, state_before, state_after, risk_snapshot
+        )
+        reward = self._apply_non_progress_penalty(reward, state_before, state_after)
+        reward = self._apply_diversity_reward(reward, action)
 
         hard_veto_reason = self._check_hard_veto_for_stage()
         if hard_veto_reason:
@@ -674,6 +686,9 @@ class DealRoomV3S2P:
         weak_signals = self._generate_weak_signals()
         veto_precursors = self._compute_veto_precursors(risk_snapshot)
 
+        noisy_eng_level = self._apply_pomdp_noise(dict(self._noisy_engagement))
+        weak_signals = self._apply_weak_signal_noise(weak_signals)
+
         engagement_level_delta = {
             sid: self._noisy_engagement[sid]
             - (
@@ -704,8 +719,8 @@ class DealRoomV3S2P:
                 sid: {"role": get_archetype(sid).role if get_archetype(sid) else sid}
                 for sid in STANDARD_STAKEHOLDERS
             },
-            stakeholder_messages=dict(stakeholder_messages),
-            engagement_level=dict(self._noisy_engagement),
+            stakeholder_messages=self._apply_message_corruption(dict(stakeholder_messages)),
+            engagement_level=noisy_eng_level,
             weak_signals=weak_signals,
             known_constraints=[],
             requested_artifacts=dict(self._state.requested_artifacts)
@@ -1112,6 +1127,91 @@ class DealRoomV3S2P:
         ).hexdigest()
         return np.random.default_rng(int(digest[:16], 16))
 
+    def _apply_milestone_bonuses(
+        self,
+        reward: float,
+        action: DealRoomAction,
+        state_before: StateSnapshot,
+        state_after: StateSnapshot,
+        risk_snapshot: Dict[str, Any],
+    ) -> float:
+        bonus = 0.0
+
+        stage_before = state_before.deal_stage
+        stage_after = state_after.deal_stage
+        if stage_after != stage_before:
+            stage_order = ["evaluation", "negotiation", "legal_review", "final_approval", "closed"]
+            if stage_order.index(stage_after) > stage_order.index(stage_before):
+                bonus += 0.5
+
+        blockers_before = set(state_before.active_blockers)
+        blockers_after = set(state_after.active_blockers)
+        resolved = len(blockers_before - blockers_after)
+        if resolved > 0:
+            bonus += 0.15 * resolved
+
+        doc_names = {str(d.get("type") or d.get("name") or "").lower() for d in action.documents}
+        if action.action_type == "send_document":
+            if "dpa" in doc_names:
+                legal_cvar = risk_snapshot["cvar_losses"].get("Legal", 0.0)
+                legal_tau = risk_snapshot["thresholds"].get("Legal", 0.3)
+                if legal_cvar > 0.15 * legal_tau:
+                    bonus += 0.3
+            elif "security_cert" in doc_names:
+                bonus += 0.2
+
+        precursors_before_keys = set(self._compute_veto_precursors(state_before).keys()) if state_before else set()
+        precursors_after_keys = set(state_after.active_blockers)
+        if len(precursors_after_keys) > len(precursors_before_keys):
+            bonus -= 0.2
+
+        return reward + bonus
+
+    def _apply_non_progress_penalty(
+        self, reward: float, state_before: StateSnapshot, state_after: StateSnapshot
+    ) -> float:
+        belief_deltas = [
+            state_after.beliefs[sid].positive_mass() - state_before.beliefs[sid].positive_mass()
+            for sid in state_after.beliefs
+            if sid in state_before.beliefs
+        ]
+        max_delta = max(abs(d) for d in belief_deltas) if belief_deltas else 0.0
+        if max_delta < 0.02:
+            reward -= 0.1
+        return reward
+
+    def _apply_diversity_reward(self, reward: float, action: DealRoomAction) -> float:
+        action_key = f"{action.action_type}:{':'.join(sorted(action.target_ids))}"
+        if not hasattr(self, "_action_history"):
+            self._action_history: List[str] = []
+        self._action_history.append(action_key)
+        recent = self._action_history[-10:]
+        if len(set(recent)) >= 3:
+            reward += 0.05
+        return reward
+
+    def _apply_pomdp_noise(self, engagement: Dict[str, float]) -> Dict[str, float]:
+        corrupted = {}
+        for sid, level in engagement.items():
+            noise = self._rng.normal(0, OBS_CONFIG.pomdp_noise_sigma)
+            corrupted[sid] = float(np.clip(level + noise, 0.0, 1.0))
+        return corrupted
+
+    def _apply_weak_signal_noise(self, weak_signals: Dict[str, List[str]]) -> Dict[str, List[str]]:
+        for sid in weak_signals:
+            signals = list(weak_signals[sid])
+            kept = [s for s in signals if self._rng.random() > OBS_CONFIG.weak_signal_drop_prob]
+            if not kept:
+                kept = ["neutral"]
+            weak_signals[sid] = kept
+        return weak_signals
+
+    def _apply_message_corruption(self, messages: Dict[str, str]) -> Dict[str, str]:
+        for sid in messages:
+            if self._rng.random() < OBS_CONFIG.message_corrupt_prob:
+                messages[sid] = "[Message received - content not fully visible]"
+        return messages
+
     def _evaluate_committee_risk(self, deal_terms: Dict[str, Any]) -> Dict[str, Any]:
         all_utilities: Dict[str, float] = {}
         cvar_losses: Dict[str, float] = {}
@@ -1161,6 +1261,9 @@ class DealRoomV3S2P:
     def _check_for_veto(
         self, risk_snapshot: Dict[str, Any]
     ) -> Tuple[bool, Optional[str]]:
+        grace_rounds = getattr(self._scenario, "veto_grace_rounds", 0) if self._scenario else 0
+        if self._round_number <= grace_rounds:
+            return False, None
         candidates: List[Tuple[float, str]] = []
         for sid in STANDARD_STAKEHOLDERS:
             profile = get_archetype(sid)
