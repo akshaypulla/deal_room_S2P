@@ -711,6 +711,21 @@ class DealRoomV3S2P:
             else STANDARD_STAKEHOLDERS[0]
         )
 
+        def _compute_band_from_belief(pos_mass: float) -> str:
+            if pos_mass >= 0.70:
+                return "supporter"
+            elif pos_mass >= 0.55:
+                return "workable"
+            elif pos_mass < 0.45:
+                return "blocker"
+            return "neutral"
+
+        approval_path_progress = {}
+        for sid in STANDARD_STAKEHOLDERS:
+            belief = self._beliefs.get(sid)
+            pos_mass = belief.positive_mass() if belief else 0.5
+            approval_path_progress[sid] = {"band": _compute_band_from_belief(pos_mass)}
+
         return DealRoomObservation(
             reward=reward,
             metadata={"graph_seed": self._graph.seed if self._graph else None},
@@ -727,9 +742,7 @@ class DealRoomV3S2P:
             requested_artifacts=dict(self._state.requested_artifacts)
             if self._state
             else {},
-            approval_path_progress={
-                sid: {"band": "neutral"} for sid in STANDARD_STAKEHOLDERS
-            },
+            approval_path_progress=approval_path_progress,
             deal_momentum=self._state.deal_momentum if self._state else "stalling",
             deal_stage=self._state.deal_stage if self._state else "evaluation",
             competitor_events=[],
