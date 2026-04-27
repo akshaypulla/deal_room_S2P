@@ -348,28 +348,9 @@ def parse_action_text(text: str) -> DealRoomAction:
     return _fallback_action(text)
 
 
-def _fallback_action(text: str) -> DealRoomAction:
-    """Parse failure fallback — extract what we can or use safe default."""
-    text = text.strip()
-    text = text.split("###")[0].strip()
-
-    text_lower = text.lower()
-
-    for stakeholder in STAKEHOLDER_NAMES:
-        if stakeholder.lower() in text_lower:
-            return DealRoomAction(
-                action_type="direct_message",
-                target=stakeholder,
-                target_ids=[stakeholder],
-                message=text[:200],
-            )
-
-    return DealRoomAction(
-        action_type="direct_message",
-        target="all",
-        target_ids=STAKEHOLDER_NAMES,
-        message=text[:200] if text else "Acknowledged.",
-    )
+def _fallback_action(text: str) -> None:
+    """Parse failure — return None so reward function can hard-penalize."""
+    return None
 
 
 # ---------------------------------------------------------------------------

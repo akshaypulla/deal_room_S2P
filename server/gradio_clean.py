@@ -595,20 +595,17 @@ def _build_level_buttons(view_state: Dict[str, Any]) -> Tuple[str, str, str]:
 web_manager: Optional[DealRoomWebManager] = None
 
 
-def _js_chip_handler(chip_text: str) -> str:
-    return f"Chip selected: {chip_text}"
-
-
-def _js_stakeholder_handler(stakeholder_id: str) -> str:
-    return f"Stakeholder selected: {stakeholder_id}"
-
-
 def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) -> gr.Blocks:
     global web_manager
     web_manager = DealRoomWebManager(pool, metadata)
 
     demo = gr.Blocks(elem_classes=["dealroom-clean"])
     with demo:
+        gr.HTML("""
+        <script>
+        window._drCallbacks = {};
+        </script>
+        """)
         gr.HTML(f"<style>{CLEAN_CSS}</style>")
         gr.HTML("""
         <script>
@@ -653,28 +650,7 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                 )
                 _dr_stakeholder_input = gr.Textbox(visible=False, label="_dr_stakeholder")
                 _dr_chip_input = gr.Textbox(visible=False, label="_dr_chip")
-                stakeholders_card_html = gr.HTML(
-                    js_on_load="""
-                    window.__drInitStakeholderHandler = function(component_id, session_hash) {
-                        element.addEventListener('click', function(e) {
-                            var si = e.target.closest('[data-stakeholder]');
-                            if (si) {
-                                var id = si.getAttribute('data-stakeholder');
-                                var url = '/__gradio_ui__/gradio_api/component_server/' + component_id + '/call';
-                                fetch(url, {
-                                    method: 'POST',
-                                    headers: {'Content-Type': 'application/json'},
-                                    body: JSON.stringify({
-                                        fn_name: '_js_stakeholder_handler',
-                                        data: [id],
-                                        session_hash: session_hash
-                                    })
-                                });
-                            }
-                        });
-                    };
-                    """
-                )
+                stakeholders_card_html = gr.HTML()
                 detail_card_html = gr.HTML()
                 message_card_html = gr.HTML()
                 send_btn = gr.Button("Send Response", elem_classes=["send-btn"], variant="primary", visible=False)
@@ -699,7 +675,6 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
             deal_close_popup_html,
             simple_btn, medium_btn, hard_btn,
             stakeholder_dropdown,
-            _dr_stakeholder_input, _dr_chip_input,
         ]
 
         def render_initial(vs, sr):
@@ -709,7 +684,7 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
             return (vs, sr, "", "", _build_message_panel(vs), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False),
                     _build_hint(vs), "", _build_score_panel(vs), _build_how_it_works(), _build_deal_close_popup(vs),
                     lvl_simple, lvl_medium, lvl_hard,
-                    gr.update(visible=False), gr.update(), gr.update())
+                    gr.update(visible=False))
 
         demo.load(fn=render_initial, inputs=[view_state, saved_runs], outputs=outputs)
 
@@ -728,7 +703,7 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                     _build_hint(updated), _build_triggered_popup(updated),
                     _build_score_panel(updated), _build_how_it_works(), _build_deal_close_popup(updated),
                     lvl_simple, lvl_medium, lvl_hard,
-                    gr.update(choices=stakeholder_ids, value=first_stakeholder, visible=True), gr.update(), gr.update())
+                    gr.update(choices=stakeholder_ids, value=first_stakeholder, visible=True))
 
         def handle_stakeholder_click(stakeholder_id: str, vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
             vs = _normalize_view_state(vs)
@@ -746,8 +721,8 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                     gr.update(visible=True), gr.update(visible=False), gr.update(visible=False),
                     _build_hint(updated), _build_triggered_popup(updated),
                     _build_score_panel(updated), _build_how_it_works(), _build_deal_close_popup(updated),
-                    gr.update(), gr.update(), gr.update(),
-                    gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")), gr.update(), gr.update())
+                    lvl_simple, lvl_medium, lvl_hard,
+                    gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")))
 
         def handle_send(msg: str, vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
             vs = _normalize_view_state(vs)
@@ -785,7 +760,7 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                     _build_hint(updated), _build_triggered_popup(updated),
                     _build_score_panel(updated), _build_how_it_works(), _build_deal_close_popup(updated),
                     lvl_simple, lvl_medium, lvl_hard,
-                    gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")), gr.update(), gr.update())
+                    gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")))
 
         def handle_run(vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
             vs = _normalize_view_state(vs)
@@ -816,7 +791,7 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                     _build_hint(updated), _build_triggered_popup(updated),
                     _build_score_panel(updated), _build_how_it_works(), _build_deal_close_popup(updated),
                     lvl_simple, lvl_medium, lvl_hard,
-                    gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")), gr.update(), gr.update())
+                    gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")))
 
         def handle_autoplay(vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
             vs = _normalize_view_state(vs)
@@ -841,7 +816,7 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                     _build_hint(updated), _build_triggered_popup(updated),
                     _build_score_panel(updated), _build_how_it_works(), _build_deal_close_popup(updated),
                     lvl_simple, lvl_medium, lvl_hard,
-                    gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")), gr.update(), gr.update())
+                    gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")))
 
         def handle_level_select(level: str, vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
             vs = _normalize_view_state(vs)
@@ -853,10 +828,10 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
             return (updated, sr,
                     _build_stakeholder_list(updated, stakeholder_ids) if stakeholder_ids else "", _build_detail_panel(updated), _build_message_panel(updated),
                     gr.update(visible=False), gr.update(visible=False), gr.update(visible=False),
-                    _build_hint(updated), "",
+                    _build_hint(updated), _build_triggered_popup(updated),
                     _build_score_panel(updated), _build_how_it_works(), _build_deal_close_popup(updated),
                     lvl_simple, lvl_medium, lvl_hard,
-                    gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")), gr.update(), gr.update())
+                    gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")))
 
         def handle_chip_select(chip_text: str, vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
             vs = _normalize_view_state(vs)
@@ -871,7 +846,7 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                     _build_hint(updated), _build_triggered_popup(updated),
                     _build_score_panel(updated), _build_how_it_works(), _build_deal_close_popup(updated),
                     gr.update(), gr.update(), gr.update(),
-                    gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")), gr.update(), gr.update())
+                    gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")))
 
         start_btn.click(fn=handle_start, inputs=[gr.State("simple"), view_state, saved_runs], outputs=outputs)
 
@@ -893,14 +868,36 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
             fn=handle_stakeholder_click,
             inputs=[stakeholder_dropdown, view_state, saved_runs],
             outputs=outputs,
-            js="(e) => { var si = e && e.target && e.target.closest ? e.target.closest('[data-stakeholder]') : null; return si ? si.getAttribute('data-stakeholder') || '' : ''; }"
+            js="""
+            function() {
+                window.dealRoomClean.stakeholderFn = function(id) {
+                    window._drCallbacks._stakeholderId = id;
+                    window._drStakeholderClicked = true;
+                };
+                return '';
+            }
+            """
         )
 
         message_card_html.change(
             fn=handle_chip_select,
             inputs=[message_card_html, view_state, saved_runs],
             outputs=outputs,
-            js="(html) => { var m = html && html.match && html.match(/data-chip='([^']+)'/); return m ? (m[1] || '') : ''; }"
+            js="""
+            function(html) {
+                window.dealRoomClean.chipFn = function(text) {
+                    window._drCallbacks._chipText = text;
+                    window._drChipClicked = true;
+                };
+                return '';
+            }
+            """
+        )
+
+        demo.load(
+            fn=lambda vs, sr: (vs, sr),
+            inputs=[view_state, saved_runs],
+            outputs=[view_state, saved_runs]
         )
 
     return demo
