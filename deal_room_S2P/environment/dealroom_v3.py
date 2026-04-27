@@ -440,11 +440,6 @@ class DealRoomV3S2P:
         reward_components = score.to_dict()
 
         reward += STEP_PENALTY
-        reward = self._apply_milestone_bonuses(
-            reward, action, state_before, state_after, risk_snapshot
-        )
-        reward = self._apply_non_progress_penalty(reward, state_before, state_after)
-        reward = self._apply_diversity_reward(reward, action)
 
         hard_veto_reason = self._check_hard_veto_for_stage()
         if hard_veto_reason:
@@ -455,6 +450,12 @@ class DealRoomV3S2P:
             )
 
         risk_snapshot = self._evaluate_committee_risk(self._state.offer_state)
+        reward = self._apply_milestone_bonuses(
+            reward, action, state_before, state_after, risk_snapshot
+        )
+        reward = self._apply_non_progress_penalty(reward, state_before, state_after)
+        reward = self._apply_diversity_reward(reward, action)
+
         precursors = self._compute_veto_precursors(risk_snapshot)
         self._update_veto_precursor_streaks(precursors)
         veto_triggered, veto_stakeholder = self._check_for_veto(risk_snapshot)
