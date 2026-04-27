@@ -782,6 +782,8 @@ class DealRoomV3S2P:
 
     def _compute_veto_precursors(self, risk_snapshot: Dict[str, Any]) -> Dict[str, str]:
         precursors = {}
+        if risk_snapshot is None:
+            return precursors
         for sid in STANDARD_STAKEHOLDERS:
             profile = get_archetype(sid)
             if not profile or not profile.veto_power:

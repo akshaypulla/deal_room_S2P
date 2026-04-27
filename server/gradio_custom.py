@@ -267,6 +267,12 @@ CUSTOM_CSS = """
     border-color: #FF6A00;
     box-shadow: 0 0 24px rgba(255, 106, 0, 0.5);
 }
+.seat.triggered {
+    animation: pulse-purple 2s infinite;
+    border-color: #a855f7;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+}
+@keyframes pulse-purple { 0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,0)} 50%{box-shadow:0 0 16px 4px rgba(168,85,247,0.5)} }
 .seat.blocking {
     background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%);
     border-color: #ef4444;
@@ -1042,11 +1048,21 @@ def build_custom_tab(
         updated["score_delta"] = reward - old_score if old_score else None
         updated["last_score"] = reward
         updated["round_complete"] = done
+        updated["response_sent"] = True
+        prev_info = view_state.get("last_info", {})
+        propagation_deltas = info.get("propagation_deltas", {})
+        triggered = []
+        if propagation_deltas:
+            for sid, delta in propagation_deltas.items():
+                if delta and abs(float(delta)) > 0.05:
+                    triggered.append(sid)
+        updated["triggered_stakeholders"] = triggered
         if done:
             updated["status_message"] = f"Round complete! Final score: {reward:.2f}"
             updated["show_hint"] = False
         else:
             updated["status_message"] = f"Step {step_num} | Reward: {reward:.2f}"
+            updated["response_sent"] = False
         return updated
 
     def _save_run_if_complete(
@@ -1091,6 +1107,7 @@ def build_custom_tab(
         view_state = _normalize_view_state(view_state)
         observation = view_state.get("current_observation") or {}
         selected = view_state.get("selected_stakeholder")
+        triggered = view_state.get("triggered_stakeholders", [])
         seats_html = []
         stakeholder_list = list(observation.get("stakeholders", {}).items())
         for index, (stakeholder_id, payload) in enumerate(stakeholder_list):
@@ -1100,7 +1117,10 @@ def build_custom_tab(
             pos = SEAT_POSITIONS[index]
             pos_style = "; ".join(f"{k}: {v}" for k, v in pos.items())
             is_selected = stakeholder_id == selected
+            is_triggered = stakeholder_id in triggered
             seat_class = f"seat {band}"
+            if is_triggered:
+                seat_class = f"seat triggered"
             if is_selected:
                 seat_class += " selected"
             elif selected and stakeholder_id != selected:
@@ -1456,12 +1476,14 @@ def build_custom_tab(
     def _build_hint(view_state: Dict[str, Any]) -> str:
         view_state = _normalize_view_state(view_state)
         round_started = view_state.get("round_started", False)
+        response_sent = view_state.get("response_sent", False)
         if not round_started:
             return "<div class='hint-box'>👆 Click 'Start Simple Round' to begin!</div>"
 
         observation = view_state.get("current_observation") or {}
         stakeholders = observation.get("stakeholders", {})
         selected = view_state.get("selected_stakeholder")
+        triggered = view_state.get("triggered_stakeholders", [])
 
         if not stakeholders:
             return "<div class='hint-box'>⏳ Waiting for game to load...</div>"
@@ -1477,6 +1499,10 @@ def build_custom_tab(
 
         if len(aligned_stakeholders) == len(stakeholders):
             return "<div class='hint-box'>🎉 All stakeholders aligned! Click 'Run Round' to finalize and see your score!</div>"
+
+        if triggered:
+            names = ", ".join(f"<strong>{n}</strong>" for n in triggered)
+            return f"<div class='hint-box'>⚡ Cascade! {names} were triggered by the last action — click them to see how they responded.</div>"
 
         if not selected or selected not in stakeholders:
             next_uncertain = (
@@ -1498,7 +1524,11 @@ def build_custom_tab(
             else:
                 return "<div class='hint-box'>✅ All stakeholders aligned! Click 'Run Round' to finalize</div>"
         else:
-            return f"<div class='hint-box'>📝 {selected_name} needs attention. Use chips or type a message, then click 'Send Response'</div>"
+            hint = f"<div class='hint-box'>📝 {selected_name} needs attention. Use chips or type a message."
+            if response_sent:
+                hint += " <span style='color:#3fb950'>✓ Sent! Click 'Run Round' to see their response.</span>"
+            hint += "</div>"
+            return hint
 
     def _render_all_outputs(
         view_state: Dict[str, Any], saved_runs: List[Dict[str, Any]]
@@ -1778,10 +1808,6 @@ def build_custom_tab(
     ) -> Tuple[Any, ...]:
         view_state = _normalize_view_state(view_state)
         saved_runs = _normalize_saved_runs(saved_runs)
-        if level not in view_state.get("unlocked_levels", []):
-            return (view_state, saved_runs) + _render_all_outputs(
-                view_state, saved_runs
-            )
         return handle_start_round(level, view_state, saved_runs)
 
     demo = gr.Blocks(elem_classes=["dealroom-lab"])
@@ -1800,17 +1826,17 @@ def build_custom_tab(
         with gr.Row(elem_classes=["step-indicator"]):
             step_simple = gr.Button(
                 "🔓 Simple\nStart here",
-                elem_classes=["step-btn", "active"],
+                elem_classes=["step-btn", "active", "unlocked"],
                 variant="secondary",
             )
             step_medium = gr.Button(
-                "⚪ Medium\nAvailable after Simple",
-                elem_classes=["step-btn"],
+                "⚡ Medium\nAll unlocked",
+                elem_classes=["step-btn", "unlocked"],
                 variant="secondary",
             )
             step_hard = gr.Button(
-                "⚪ Hard\nAvailable after Medium",
-                elem_classes=["step-btn"],
+                "🔒 Hard\nAll unlocked",
+                elem_classes=["step-btn", "unlocked"],
                 variant="secondary",
             )
 
