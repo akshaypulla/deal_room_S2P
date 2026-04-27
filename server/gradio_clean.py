@@ -1072,6 +1072,127 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                 vs["selected_chip"] = chips[chip_idx]
                 vs["message_text"] = chips[chip_idx]
             return (vs, sr) + _render_all_outputs(vs, sr)
+            parts = selected.split(" ", 1)
+            sid = parts[1] if len(parts) > 1 else selected
+            observation = vs.get("current_observation") or {}
+            stakeholders = observation.get("stakeholders", {})
+            if sid not in stakeholders:
+                return (vs, sr) + _render_all_outputs(vs, sr)
+            vs["selected_stakeholder"] = sid
+            vs["popup_index"] = 0
+            vs["popup_queue"] = [{"stakeholder_id": sid}]
+            vs["show_hint"] = False
+            vs["selected_chip"] = None
+            vs["message_text"] = ""
+            vs["workflow_step"] = 2
+            vs["response_sent"] = False
+            return (vs, sr) + _render_all_outputs(vs, sr)
+
+        def handle_send(msg: str, vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
+            vs = _normalize_view_state(vs)
+            sr = _normalize_saved_runs(sr)
+            if not vs.get("current_observation") or not vs.get("session_id"):
+                updated = _run_reset("aligned", int(vs.get("seed", 42)), "simple", vs)
+                return (updated, sr) + _render_all_outputs(updated, sr)
+            selected = vs.get("selected_stakeholder", "all")
+            action = DealRoomAction(
+                action_type="direct_message", target=selected,
+                target_ids=[selected] if selected != "all" else [],
+                message=msg or "Understood.",
+            )
+            prev_info = vs.get("last_info", {})
+            obs, reward, done, info, state = web_manager.step_session(vs["session_id"], action)
+            triggered = _compute_triggered_stakeholders(info, prev_info)
+            updated = _record_step(vs, action, obs, reward, done, info, state.model_dump())
+            updated["triggered_stakeholders"] = triggered
+            stakeholders_list = list(updated["current_observation"].get("stakeholders", {}).keys())
+            current_sel = vs.get("selected_stakeholder")
+            if current_sel not in stakeholders_list:
+                current_sel = stakeholders_list[0] if stakeholders_list else None
+            updated["selected_stakeholder"] = current_sel
+            updated["popup_index"] = 0
+            updated["popup_queue"] = [{"stakeholder_id": current_sel}] if current_sel else []
+            updated["show_hint"] = not updated.get("round_complete")
+            updated["selected_chip"] = None
+            updated["message_text"] = ""
+            sr, updated = _save_run_if_complete(updated, sr)
+            return (updated, sr) + _render_all_outputs(updated, sr)
+
+        def handle_run(vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
+            vs = _normalize_view_state(vs)
+            sr = _normalize_saved_runs(sr)
+            if not vs.get("current_observation") or not vs.get("session_id"):
+                updated = _run_reset("aligned", int(vs.get("seed", 42)), "simple", vs)
+                return (updated, sr) + _render_all_outputs(updated, sr)
+            prev_info = vs.get("last_info", {})
+            action = _policy_action(vs["current_observation"])
+            obs, reward, done, info, state = web_manager.step_session(vs["session_id"], action)
+            triggered = _compute_triggered_stakeholders(info, prev_info)
+            updated = _record_step(vs, action, obs, reward, done, info, state.model_dump())
+            updated["triggered_stakeholders"] = triggered
+            updated["popup_index"] = 0
+            stakeholders_list = list(updated["current_observation"].get("stakeholders", {}).keys())
+            updated["popup_queue"] = [{"stakeholder_id": s} for s in stakeholders_list]
+            updated["show_hint"] = not updated.get("round_complete")
+            updated["selected_chip"] = None
+            updated["message_text"] = ""
+            sr, updated = _save_run_if_complete(updated, sr)
+            return (updated, sr) + _render_all_outputs(updated, sr)
+
+        def handle_autoplay_toggle(vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
+            vs = _normalize_view_state(vs)
+            sr = _normalize_saved_runs(sr)
+            if vs.get("auto_playing"):
+                vs["auto_playing"] = False
+                vs["auto_paused"] = False
+            else:
+                vs["auto_playing"] = True
+                vs["auto_paused"] = False
+            return (vs, sr) + _render_all_outputs(vs, sr)
+
+        def handle_autoplay_action(action_type: str, vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
+            vs = _normalize_view_state(vs)
+            sr = _normalize_saved_runs(sr)
+            if action_type == "stop":
+                vs["auto_playing"] = False
+                vs["auto_paused"] = False
+            elif action_type == "pause":
+                vs["auto_paused"] = True
+            elif action_type == "start":
+                vs["auto_paused"] = False
+            return (vs, sr) + _render_all_outputs(vs, sr)
+
+        def handle_autoplay_step(vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
+            vs = _normalize_view_state(vs)
+            sr = _normalize_saved_runs(sr)
+            if not vs.get("auto_playing") or vs.get("auto_paused"):
+                return (vs, sr) + _render_all_outputs(vs, sr)
+            if vs.get("round_complete"):
+                vs["auto_playing"] = False
+                return (vs, sr) + _render_all_outputs(vs, sr)
+            prev_info = vs.get("last_info", {})
+            action = _policy_action(vs["current_observation"])
+            obs, reward, done, info, state = web_manager.step_session(vs["session_id"], action)
+            triggered = _compute_triggered_stakeholders(info, prev_info)
+            updated = _record_step(vs, action, obs, reward, done, info, state.model_dump())
+            updated["triggered_stakeholders"] = triggered
+            stakeholders_list = list(updated["current_observation"].get("stakeholders", {}).keys())
+            updated["popup_queue"] = [{"stakeholder_id": s} for s in stakeholders_list]
+            updated["selected_chip"] = None
+            updated["message_text"] = ""
+            sr, updated = _save_run_if_complete(updated, sr)
+            if updated.get("round_complete"):
+                vs["auto_playing"] = False
+            return (updated, sr) + _render_all_outputs(updated, sr)
+
+        def handle_chip_select(chip_idx: int, vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
+            vs = _normalize_view_state(vs)
+            sr = _normalize_saved_runs(sr)
+            chips = _generate_chips(vs)
+            if 0 <= chip_idx < len(chips):
+                vs["selected_chip"] = chips[chip_idx]
+                vs["message_text"] = chips[chip_idx]
+            return (vs, sr) + _render_all_outputs(vs, sr)
 
         chip_btn_0.click(fn=handle_chip_select, inputs=[gr.State(0), view_state, saved_runs], outputs=outputs)
         chip_btn_1.click(fn=handle_chip_select, inputs=[gr.State(1), view_state, saved_runs], outputs=outputs)
