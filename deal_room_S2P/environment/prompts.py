@@ -176,7 +176,14 @@ ACTION_PATTERNS = [
     ),
     (
         re.compile(
-            r"^\s*(concession)\s+(\w+)\s*\|\s*(.+)$",
+            r"^\s*concession\s+(\w+)\s*\|\s*(\w+)\s*=\s*([\d.]+)(\s+.*)?$",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        "concession_pipe",
+    ),
+    (
+        re.compile(
+            r"^\s*concession\s+(\w+)\s*\|\s*(\w+)=([\d.]+)\s+(.+)$",
             re.IGNORECASE | re.DOTALL,
         ),
         "concession_pipe",
@@ -317,15 +324,22 @@ def parse_action_text(text: str) -> DealRoomAction:
                 if action_type == "concession":
                     term_key = groups[1].strip().lower()
                     term_value = float(groups[2])
+                    message = ""
                 else:
-                    parts = groups[2].strip().split("=")
-                    term_key = parts[0].strip().lower()
-                    term_value = float(parts[1]) if len(parts) > 1 else 0.0
+                    if '=' in groups[2]:
+                        parts = groups[2].strip().split('=', 1)
+                        term_key = parts[0].strip().lower()
+                        term_value = float(parts[1].strip())
+                        message = (groups[3].strip() if groups[3] else "")[:500]
+                    else:
+                        term_key = groups[1].strip().lower()
+                        term_value = float(groups[2].strip())
+                        message = (groups[3].strip() if groups[3] else "")[:500]
                 return DealRoomAction(
                     action_type="concession",
                     target=target,
                     target_ids=[target],
-                    message=f"Concession offered on {term_key}.",
+                    message=message or f"Concession offered on {term_key}.",
                     proposed_terms={term_key: term_value},
                 )
             elif action_type in ("group_proposal", "group_proposal_pipe"):

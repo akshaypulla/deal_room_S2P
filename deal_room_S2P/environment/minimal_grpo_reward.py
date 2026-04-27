@@ -13,7 +13,7 @@ import random
 from deal_room_S2P.environment.dealroom_v3 import DealRoomV3S2P
 from deal_room_S2P.environment.prompts import parse_action_text
 
-PARSE_PENALTY = -1.0       # hard penalty for invalid output format (start -1.0, raise later)
+PARSE_PENALTY = -0.3       # hard penalty for invalid output format (start -1.0, raise later)
 MAX_ROLLOUT_STEPS = 2      # 2 steps: model action + 1 heuristic (not 3 — keeps credit clean)
 ROLLOUT_WEIGHT = 0.3       # 0.3 discount makes reward reflect model's action more than environment
 
