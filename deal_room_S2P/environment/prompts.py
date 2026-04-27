@@ -291,7 +291,7 @@ def parse_action_text(text: str) -> DealRoomAction:
                 )
             elif action_type in ("direct_message", "direct_message_pipe"):
                 target = _normalize_target(groups[1 if action_type == "direct_message" else 2])
-                message = (groups[2 if action_type == "direct_message" else 3]).strip()[:500]
+                message = (groups[2 if action_type == "direct_message" else 2]).strip()[:500]
                 return DealRoomAction(
                     action_type="direct_message",
                     target=target,
