@@ -137,6 +137,10 @@ class MinimalDealRoomReward:
             line = line.strip()
             if line.startswith(valid_starts):
                 return line
+            for start in valid_starts:
+                idx = line.find(start)
+                if idx >= 0:
+                    return line[idx:].strip()
         return lines[0].strip() if lines else ""
 
     def _terminal_bonus(self, env) -> float:
