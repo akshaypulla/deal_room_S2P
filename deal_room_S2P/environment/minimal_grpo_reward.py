@@ -128,8 +128,8 @@ class MinimalDealRoomReward:
             return None  # ← NO fallback, NO safe default
 
     def _clean_output(self, text: str) -> str:
-        """Strip EOS tokens and find the first valid action line (not last)."""
-        text = text.replace("</s>", "").replace("EOS", "").replace("<|endoftext|>", "")
+        """Strip EOS tokens and find the first valid action line."""
+        text = text.replace("</s>", "").replace("EOS", "").replace("<|endoftext|>", "").replace("###", "")
         lines = text.strip().split("\n")
         valid_starts = ("send_document", "direct_message", "concession",
                         "group_proposal", "exec_escalation", "submit_proposal")
@@ -137,7 +137,7 @@ class MinimalDealRoomReward:
             line = line.strip()
             if line.startswith(valid_starts):
                 return line
-        return lines[-1].strip() if lines else ""
+        return lines[0].strip() if lines else ""
 
     def _terminal_bonus(self, env) -> float:
         outcome = env._state.terminal_outcome if env._state else ''
