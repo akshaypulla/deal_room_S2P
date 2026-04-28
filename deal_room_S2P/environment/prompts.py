@@ -315,8 +315,8 @@ def parse_action_text(text: str) -> DealRoomAction:
             groups = m.groups()
             if action_type in ("send_document", "send_document_pipe"):
                 if action_type == "send_document":
-                    target = _normalize_target(groups[1])
-                    doc_type = _validate_doc_type(groups[2])
+                    target = _normalize_target(groups[0])
+                    doc_type = _validate_doc_type(groups[1])
                     message = (groups[2] or "").strip()[:500]
                 else:
                     target = _normalize_target(groups[1])
