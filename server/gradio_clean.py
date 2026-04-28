@@ -40,9 +40,12 @@ CLEAN_CSS = """
 .dr-header p { color: #8b949e; font-size: 0.88rem; margin: 0; }
 
 .level-row { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
-.level-btn { flex: 1; padding: 14px 8px !important; border-radius: 10px !important; font-size: 0.85rem !important; font-weight: 700 !important; border: 2px solid #30363d !important; background: #161b22 !important; color: #8b949e !important; cursor: pointer; }
+.level-btn { flex: 1; padding: 14px 8px !important; border-radius: 10px !important; font-size: 0.85rem !important; font-weight: 700 !important; border: 2px solid #30363d !important; background: #161b22 !important; color: #8b949e !important; cursor: pointer; transition: all 0.2s; }
 .level-btn.selected { border-color: #ff6a00 !important; background: rgba(255,106,0,0.15) !important; color: #ff6a00 !important; box-shadow: 0 0 20px rgba(255,106,0,0.3); }
 .level-btn:hover { border-color: #ff6a00 !important; color: #ff6a00 !important; }
+.level-btn.aligned-task { border-left: 4px solid #3fb950; }
+.level-btn.conflicted-task { border-left: 4px solid #d29922; }
+.level-btn.hostile-task { border-left: 4px solid #f85149; }
 .start-btn { padding: 14px 24px !important; font-size: 1rem !important; font-weight: 700 !important; background: linear-gradient(135deg,#ff6a00,#e05500) !important; border: none !important; border-radius: 10px !important; color: #fff !important; box-shadow: 0 4px 20px rgba(255,106,0,0.4); }
 .start-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255,106,0,0.5); }
 
@@ -60,7 +63,7 @@ CLEAN_CSS = """
 .stakeholder-item.blocking { border-left: 4px solid #f85149; animation: pulse-blocking 2s infinite; }
 .stakeholder-item.uncertain { border-left: 4px solid #d29922; }
 .stakeholder-item.triggered { border-left: 4px solid #a855f7; background: rgba(168,85,247,0.08); animation: pulse-triggered 2s infinite; }
-.stakeholder-item.dimmed { opacity: 0.5; }
+.stakeholder-item.dimmed { opacity: 0.5; pointer-events: none; }
 @keyframes pulse-blocking { 0%,100%{box-shadow:0 0 0 0 rgba(248,81,73,0)} 50%{box-shadow:0 0 12px 3px rgba(248,81,73,0.35)} }
 @keyframes pulse-triggered { 0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,0)} 50%{box-shadow:0 0 16px 4px rgba(168,85,247,0.45)} }
 .s-icon { font-size: 1.4rem; width: 32px; text-align: center; }
@@ -77,12 +80,15 @@ CLEAN_CSS = """
 .stakeholder-select-wrap select { width: 100%; background: #0d1117 !important; border: 2px solid #30363d !important; border-radius: 8px !important; color: #c9d1d9 !important; padding: 10px 12px !important; font-size: 0.9rem !important; cursor: pointer; }
 .stakeholder-select-wrap select:focus { border-color: #ff6a00 !important; outline: none; box-shadow: 0 0 0 3px rgba(255,106,0,0.15) !important; }
 
-.detail-card { background: #161b22; border-radius: 12px; border: 1px solid #21262d; padding: 14px; }
+.detail-card { background: #161b22; border-radius: 12px; border: 1px solid #21262d; padding: 14px; cursor: pointer; transition: all 0.2s; }
+.detail-card:hover { border-color: #30363d; }
 .detail-card h3 { font-size: 0.75rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.6px; margin: 0 0 10px; font-weight: 600; }
-.detail-quote { background: #0d1117; border-left: 3px solid #ff6a00; padding: 10px 12px; border-radius: 0 6px 6px 0; font-style: italic; color: #c9d1d9; font-size: 0.85rem; line-height: 1.5; margin-bottom: 10px; }
+.detail-quote { background: #0d1117; border-left: 3px solid #ff6a00; padding: 10px 12px; border-radius: 0 6px 6px 0; font-style: italic; color: #c9d1d9; font-size: 0.85rem; line-height: 1.5; margin-bottom: 10px; cursor: pointer; transition: background 0.2s; }
+.detail-quote:hover { background: #161b22; }
 .detail-needs { background: rgba(255,106,0,0.08); border: 1px solid rgba(255,106,0,0.2); border-radius: 6px; padding: 8px 10px; font-size: 0.8rem; }
 .detail-needs strong { color: #ff6a00; }
 .detail-needs p { color: #8b949e; margin: 4px 0 0; }
+.detail-hint { font-size: 0.72rem; color: #6e7681; margin-top: 8px; font-style: italic; }
 
 .message-card { background: #161b22; border-radius: 12px; border: 1px solid #21262d; padding: 14px; }
 .message-card h3 { font-size: 0.75rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.6px; margin: 0 0 10px; font-weight: 600; }
@@ -93,8 +99,9 @@ CLEAN_CSS = """
 .message-input { width: 100%; background: #0d1117 !important; border: 2px solid #30363d !important; border-radius: 8px !important; color: #c9d1d9 !important; padding: 12px !important; font-size: 0.9rem !important; margin-bottom: 10px; form: message-form; }
 .message-input:focus { border-color: #ff6a00 !important; box-shadow: 0 0 0 3px rgba(255,106,0,0.15) !important; }
 #message-form { display: contents; }
-.send-btn { width: 100%; padding: 14px !important; font-size: 1rem !important; font-weight: 700 !important; background: linear-gradient(135deg,#ff6a00,#e05500) !important; border: none !important; border-radius: 8px !important; color: #fff !important; box-shadow: 0 4px 16px rgba(255,106,0,0.3); }
+.send-btn { width: 100%; padding: 14px !important; font-size: 1rem !important; font-weight: 700 !important; background: linear-gradient(135deg,#ff6a00,#e05500) !important; border: none !important; border-radius: 8px !important; color: #fff !important; box-shadow: 0 4px 16px rgba(255,106,0,0.3); cursor: pointer; transition: all 0.2s; }
 .send-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,106,0,0.4); }
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
 .run-bar { display: flex; gap: 8px; margin-top: 10px; }
 .run-btn { flex: 2; padding: 12px !important; font-size: 0.9rem !important; font-weight: 600 !important; background: linear-gradient(135deg,#238636,#1a7f37) !important; border: none !important; border-radius: 8px !important; color: #fff !important; }
@@ -121,10 +128,11 @@ CLEAN_CSS = """
 
 .hint-box { background: rgba(255,106,0,0.1); border: 1px solid rgba(255,106,0,0.3); border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; color: #ff6a00; line-height: 1.5; margin-top: 10px; }
 .hint-box.success { background: rgba(63,185,80,0.1); border-color: rgba(63,185,80,0.3); color: #3fb950; }
+.hint-box.error { background: rgba(248,81,73,0.1); border-color: rgba(248,81,73,0.3); color: #f85149; }
 
 /* BIG DEAL CLOSE POPUP */
 .deal-close-popup { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; }
-.deal-close-popup.show { display: flex; }
+.deal-close-popup.show { display: flex !important; }
 .deal-close-content { background: linear-gradient(135deg,#161b22,#0d1117); border: 3px solid #3fb950; border-radius: 20px; padding: 48px 60px; text-align: center; max-width: 500px; animation: popup-in 0.5s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 0 80px rgba(63,185,80,0.4), 0 25px 60px rgba(0,0,0,0.6); }
 @keyframes popup-in { from{opacity:0;transform:scale(0.6)} to{opacity:1;transform:scale(1)} }
 .deal-close-icon { font-size: 5rem; margin-bottom: 16px; }
@@ -143,8 +151,28 @@ CLEAN_CSS = """
 .blocker-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
 .blocker-tag { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 999px; font-size: 0.68rem; background: rgba(248,81,73,0.15); color: #f85149; }
 
-/* Hidden Gradio elements */
+/* Hidden elements for internal use */
+.dr-hidden { display: none !important; }
 .stakeholder-dropdown-wrap { display: none !important; }
+
+/* Workflow step indicator */
+.workflow-steps { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+.workflow-step { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 20px; background: #161b22; border: 1px solid #21262d; font-size: 0.75rem; color: #6e7681; }
+.workflow-step.active { background: rgba(255,106,0,0.15); border-color: #ff6a00; color: #ff6a00; }
+.workflow-step.completed { background: rgba(63,185,80,0.1); border-color: #3fb950; color: #3fb950; }
+.workflow-step-num { width: 20px; height: 20px; border-radius: 50%; background: #21262d; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.7rem; }
+.workflow-step.active .workflow-step-num { background: #ff6a00; color: #fff; }
+.workflow-step.completed .workflow-step-num { background: #3fb950; color: #fff; }
+
+/* Workflow step bar - always visible */
+.workflow-step-bar { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; padding: 0 16px; }
+.workflow-step-bar .step { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 24px; background: #161b22; border: 2px solid #21262d; font-size: 0.85rem; font-weight: 600; color: #6e7681; transition: all 0.3s; }
+.workflow-step-bar .step.active { background: rgba(255,106,0,0.15); border-color: #ff6a00; color: #ff6a00; box-shadow: 0 0 16px rgba(255,106,0,0.25); }
+.workflow-step-bar .step.completed { background: rgba(63,185,80,0.15); border-color: #3fb950; color: #3fb950; }
+.workflow-step-bar .step-num { width: 24px; height: 24px; border-radius: 50%; background: #21262d; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; }
+.workflow-step-bar .step.active .step-num { background: #ff6a00; color: #fff; }
+.workflow-step-bar .step.completed .step-num { background: #3fb950; color: #fff; }
+.workflow-step-bar .step-arrow { color: #30363d; font-size: 1.2rem; }
 """
 
 
@@ -194,6 +222,7 @@ def _normalize_view_state(view_state: Optional[Dict[str, Any]]) -> Dict[str, Any
         "round_complete": False, "use_llm_agent": False,
         "workflow_step": 0, "response_sent": False, "triggered_stakeholders": [],
         "deal_close_showing": False, "last_info": {},
+        "proposal_submitted": False,
     }
     if not isinstance(view_state, dict):
         return base
@@ -309,6 +338,7 @@ def _run_reset(task: str, seed: int, level: str, view_state: Dict[str, Any]) -> 
         "response_sent": False,
         "triggered_stakeholders": [],
         "deal_close_showing": False,
+        "proposal_submitted": False,
     })
     return updated
 
@@ -425,9 +455,12 @@ def _build_detail_panel(view_state: Dict[str, Any]) -> str:
     icon = ROLE_ICONS.get(role_type, "👤")
     needs_text = ", ".join(r.replace("_", " ") for r in requested) if requested else "Nothing specific requested yet"
     return (
-        f"<div class='detail-card'><h3>{icon} {_escape(selected)} Details</h3>"
-        f"<div class='detail-quote'>\"{_escape(message)}\"</div>"
-        f"<div class='detail-needs'><strong>What they need:</strong><p>{_escape(needs_text)}</p></div></div>"
+        f"<div class='detail-card' data-selected-stakeholder='{_escape(selected)}'>"
+        f"<h3>{icon} {_escape(selected)} Details</h3>"
+        f"<div class='detail-quote' title='Click to select this stakeholder'>\"{_escape(message)}\"</div>"
+        f"<div class='detail-needs'><strong>What they need:</strong><p>{_escape(needs_text)}</p></div>"
+        f"<p class='detail-hint'>💡 Click the message above or card on the left to select this stakeholder</p>"
+        f"</div>"
     )
 
 
@@ -508,19 +541,56 @@ def _build_triggered_popup(view_state: Dict[str, Any]) -> str:
     )
 
 
+def _build_workflow_steps(view_state: Dict[str, Any]) -> str:
+    view_state = _normalize_view_state(view_state)
+    response_sent = view_state.get("response_sent", False)
+    workflow_step = view_state.get("workflow_step", 0)
+    round_started = view_state.get("round_started", False)
+
+    step_info = [
+        ("1", "Select\nStakeholder"),
+        ("2", "Send\nResponse"),
+        ("3", "Run\nRound"),
+    ]
+
+    items = []
+    for i, (num, label) in enumerate(step_info):
+        if not round_started:
+            cls = ""
+        elif i < workflow_step or (i == 1 and response_sent):
+            cls = "completed"
+        elif i == workflow_step and not response_sent:
+            cls = "active"
+        else:
+            cls = ""
+
+        arrow = "<span class='step-arrow'>→</span>" if i < len(step_info) - 1 else ""
+        items.append(
+            f"<div class='step {cls}'>"
+            f"<span class='step-num'>{num}</span>"
+            f"<span>{label.replace(chr(10), '<br>')}</span>"
+            f"</div>{arrow}"
+        )
+
+    return "<div class='workflow-step-bar'>" + "".join(items) + "</div>"
+
+
 def _build_hint(view_state: Dict[str, Any]) -> str:
     view_state = _normalize_view_state(view_state)
     round_started = view_state.get("round_started", False)
     round_complete = view_state.get("round_complete", False)
     response_sent = view_state.get("response_sent", False)
+    selected = view_state.get("selected_stakeholder")
 
     if round_complete:
         return "<div class='hint-box success'>🎉 Deal complete! Check your final score on the right panel.</div>"
     if not round_started:
-        return "<div class='hint-box'>👆 Choose a difficulty level and click <strong>Start Round</strong> to begin negotiating.</div>"
+        return "<div class='hint-box'>👆 Choose a difficulty level (Easy/Medium/Hard) and click <strong>Start Round</strong> to begin negotiating.</div>"
+    if not selected:
+        return "<div class='hint-box'>📝 <strong>Step 1:</strong> Click on a <strong>stakeholder card</strong> on the left to select them.</div>"
     if not response_sent:
-        return "<div class='hint-box'>📝 <strong>Step 1:</strong> Click a stakeholder above to select them, then type a message or click a suggestion chip, then click <strong>Send Response</strong>.</div>"
-    return "<div class='hint-box'>📝 <strong>Step 2:</strong> Click <strong>Run Round</strong> to send your message and see stakeholder reactions.</div>"
+        return "<div class='hint-box'>📝 <strong>Step 2:</strong> Type a message or click a <strong>suggestion chip</strong>, then click <strong>Send Response</strong>.</div>"
+    return "<div class='hint-box'>📝 <strong>Step 3:</strong> Click <strong>Run Round</strong> to send your message and see stakeholder reactions.</div>"
 
 
 def _build_how_it_works() -> str:
@@ -580,14 +650,14 @@ def _build_level_buttons(view_state: Dict[str, Any]) -> Tuple[str, str, str]:
     view_state = _normalize_view_state(view_state)
     current_level = view_state.get("level", "simple")
     levels = [
-        ("simple", "🔓 Simple", "Aligned task"),
-        ("medium", "⚡ Medium", "CTO-CFO tension"),
-        ("hard", "🔒 Hard", "Post-acquisition"),
+        ("simple", "Easy", "Aligned interests", "aligned-task"),
+        ("medium", "Medium", "Conflicted committee", "conflicted-task"),
+        ("hard", "Hard", "Hostile acquisition", "hostile-task"),
     ]
     btns = []
-    for level, label, desc in levels:
+    for level, label, desc, color_cls in levels:
         is_selected = level == current_level
-        cls = "level-btn selected" if is_selected else "level-btn"
+        cls = f"level-btn {color_cls}" + (" selected" if is_selected else "")
         btns.append(f"<button class='{cls}' data-level='{level}'>{label}<br><small style='opacity:0.7;font-size:0.65rem'>{desc}</small></button>")
     return (btns[0], btns[1], btns[2])
 
@@ -602,30 +672,6 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
     demo = gr.Blocks(elem_classes=["dealroom-clean"])
     with demo:
         gr.HTML(f"<style>{CLEAN_CSS}</style>")
-        gr.HTML("""
-        <script>
-        window.showDealClosePopup = function() { document.querySelectorAll('.deal-close-popup').forEach(e => e.classList.add('show')); };
-        window.dismissDealClosePopup = function() { document.querySelectorAll('.deal-close-popup').forEach(e => e.classList.remove('show')); };
-        window._drGetChipText = function(e) {
-          var btn = e.target.closest('.chip-btn');
-          return btn ? btn.getAttribute('data-chip') : '';
-        };
-        window._drSetupChipHandlers = function() {
-          document.addEventListener('click', function(e) {
-            var btn = e.target.closest('.chip-btn');
-            if (btn) {
-              btn.style.background = 'rgba(255,106,0,0.3)';
-              btn.style.borderColor = '#ff6a00';
-            }
-          });
-        };
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', window._drSetupChipHandlers);
-        } else {
-          window._drSetupChipHandlers();
-        }
-        </script>
-        """)
 
         view_state = gr.State(_normalize_view_state(None))
         saved_runs = gr.State([])
@@ -633,6 +679,8 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
         with gr.Column(elem_classes=["dr-header"]):
             gr.HTML("<h1>🎯 DealRoom</h1>"
                     "<p>B2B Negotiation Simulator — Get all stakeholders aligned to close the deal</p>")
+
+        workflow_steps_html = gr.HTML()
 
         with gr.Row(elem_classes=["level-row"]):
             simple_btn = gr.HTML()
@@ -646,20 +694,25 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                     choices=[], label="👈 Select a stakeholder to focus on",
                     elem_classes=["stakeholder-select-wrap"]
                 )
+                stakeholder_hidden_input = gr.Textbox(
+                    elem_id="dr-stakeholder-input",
+                    elem_classes=["dr-hidden"],
+                    visible=False,
+                )
                 stakeholders_card_html = gr.HTML()
                 detail_card_html = gr.HTML()
+                detail_click_handler = gr.HTML(elem_classes=["dr-hidden"], visible=True)
                 message_card_html = gr.HTML()
                 chip_wrapper_html = gr.HTML()
                 message_input = gr.Textbox(
                     lines=2, placeholder="Type your message...",
                     elem_classes=["message-input"],
                     elem_id="dr-message-input",
-                    visible=False
                 )
-                send_btn = gr.Button("Send Response", elem_classes=["send-btn"], variant="primary", visible=False)
+                send_btn = gr.Button("Send Response", elem_classes=["send-btn"], variant="primary")
                 with gr.Row(elem_classes=["run-bar"]):
-                    run_btn = gr.Button("▶ Run Round", elem_classes=["run-btn"], variant="primary", visible=False)
-                    step_btn = gr.Button("⏭ Step", elem_classes=["step-btn"], variant="secondary", visible=False)
+                    run_btn = gr.Button("▶ Run Round", elem_classes=["run-btn"], variant="primary")
+                    step_btn = gr.Button("⏭ Step", elem_classes=["step-btn"], variant="secondary")
                 hint_html = gr.HTML()
                 triggered_popup_html = gr.HTML()
 
@@ -680,6 +733,9 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
             stakeholder_dropdown,
             message_input,
             chip_wrapper_html,
+            detail_click_handler,
+            workflow_steps_html,
+            stakeholder_hidden_input,
         ]
 
         def render_initial(vs, sr):
@@ -689,9 +745,65 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
             return (vs, sr, "", "", _build_message_panel(vs), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False),
                     _build_hint(vs), "", _build_score_panel(vs), _build_how_it_works(), _build_deal_close_popup(vs),
                     lvl_simple, lvl_medium, lvl_hard,
-                    gr.update(visible=False), gr.update(visible=False), "")
+                    gr.update(visible=False), gr.update(visible=False), "", "", "", "", "")
 
-        demo.load(fn=render_initial, inputs=[view_state, saved_runs], outputs=outputs)
+        demo.load(fn=render_initial, inputs=[view_state, saved_runs], outputs=outputs, js="""
+        function() {
+        window.showDealClosePopup = function() { document.querySelectorAll('.deal-close-popup').forEach(function(e) { e.classList.add('show'); }); };
+        window.dismissDealClosePopup = function() { document.querySelectorAll('.deal-close-popup').forEach(function(e) { e.classList.remove('show'); }); };
+        window._drHandleChipClick = function(chipBtn) {
+          document.querySelectorAll('.chip-btn').forEach(function(b) {
+            b.style.background = '';
+            b.style.borderColor = '';
+          });
+          chipBtn.style.background = 'rgba(255,106,0,0.3)';
+          chipBtn.style.borderColor = '#ff6a00';
+          var msgInput = document.querySelector('#dr-message-input textarea') || document.querySelector('#dr-message-input input');
+          if (msgInput) {
+            var chipValue = chipBtn.getAttribute('data-chip') || chipBtn.textContent.trim();
+            Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value') || 
+            Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value');
+            msgInput.value = chipValue;
+            msgInput.dispatchEvent(new Event('input', { bubbles: true }));
+            msgInput.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        };
+        window._drHandleStakeholderClick = function(stakeholderItem) {
+          var stakeholderId = stakeholderItem.getAttribute('data-stakeholder');
+          if (stakeholderId) {
+            window._drCurrentSelectedStakeholder = stakeholderId;
+            var hiddenInput = document.querySelector('#dr-stakeholder-input input') || document.querySelector('#dr-stakeholder-input textarea');
+            if (!hiddenInput) hiddenInput = document.querySelector('#dr-stakeholder-input');
+            if (hiddenInput) {
+              hiddenInput.value = stakeholderId;
+              hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+              hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          }
+        };
+        window._drSetupHandlers = function() {
+          document.addEventListener('click', function(e) {
+            var chipBtn = e.target.closest('.chip-btn');
+            if (chipBtn) {
+              e.stopPropagation();
+              window._drHandleChipClick(chipBtn);
+            }
+            var stakeholderItem = e.target.closest('.stakeholder-item');
+            if (stakeholderItem) {
+              e.stopPropagation();
+              window._drHandleStakeholderClick(stakeholderItem);
+            }
+          });
+        };
+        window._drCurrentSelectedStakeholder = null;
+        window._drStakeholderCallback = null;
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', window._drSetupHandlers);
+        } else {
+          window._drSetupHandlers();
+        }
+        }
+        """)
 
         def handle_start(level: str, vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
             vs = _normalize_view_state(vs)
@@ -710,28 +822,28 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                     lvl_simple, lvl_medium, lvl_hard,
                     gr.update(choices=stakeholder_ids, value=first_stakeholder, visible=True),
                     gr.update(visible=True, value=""),
-                    "")
+                    "", "", _build_workflow_steps(updated), "")
 
         def handle_stakeholder_click(stakeholder_id: str, vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
             vs = _normalize_view_state(vs)
             sr = _normalize_saved_runs(sr)
-            if not stakeholder_id:
+            stakeholder_ids = list((vs.get("current_observation") or {}).get("stakeholders", {}).keys())
+            if not stakeholder_id or stakeholder_id not in stakeholder_ids:
                 return (vs, sr) + tuple([gr.update()] * (len(outputs) - 2))
             updated = dict(vs)
             updated["selected_stakeholder"] = stakeholder_id
             updated["selected_chip"] = None
             updated["message_text"] = ""
             updated["response_sent"] = False
-            stakeholder_ids = list((vs.get("current_observation") or {}).get("stakeholders", {}).keys())
             return (updated, sr,
                     _build_stakeholder_list(updated, stakeholder_ids), _build_detail_panel(updated), _build_message_panel(updated),
-                    gr.update(visible=True), gr.update(visible=False), gr.update(visible=False),
+                    gr.update(visible=True), gr.update(visible=True), gr.update(visible=True),
                     _build_hint(updated), _build_triggered_popup(updated),
                     _build_score_panel(updated), _build_how_it_works(), _build_deal_close_popup(updated),
                     gr.update(), gr.update(), gr.update(),
                     gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")),
                     gr.update(visible=True, value=""),
-                    "")
+                    "", "", _build_workflow_steps(updated), "")
 
         def handle_send(msg: str, vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
             vs = _normalize_view_state(vs)
@@ -771,7 +883,7 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                     lvl_simple, lvl_medium, lvl_hard,
                     gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")),
                     gr.update(value=""),
-                    "")
+                    "", "", _build_workflow_steps(updated), "")
 
         def handle_run(vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
             vs = _normalize_view_state(vs)
@@ -780,10 +892,35 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                 updated = _run_reset("aligned", int(vs.get("seed", 42)), "simple", vs)
             else:
                 prev_info = vs.get("last_info", {})
-                action = _policy_action(vs["current_observation"])
+                obs_current = _coerce_observation(vs["current_observation"])
+                deal_stage = obs_current.deal_stage
+                active_blockers = obs_current.active_blockers or []
+                real_blockers = [b for b in active_blockers if b != "missing_final_proposal"]
+                proposal_submitted = vs.get("proposal_submitted", False)
+
+                if deal_stage == "final_approval" and not real_blockers and not proposal_submitted:
+                    action = DealRoomAction(
+                        action_type="group_proposal",
+                        target="all",
+                        target_ids=list(obs_current.stakeholders.keys()),
+                        message="I believe we have enough alignment to move to final approval on concrete, reviewable terms.",
+                        proposed_terms={
+                            "price": 180000,
+                            "timeline_weeks": 14,
+                            "security_commitments": ["gdpr", "audit rights"],
+                            "support_level": "named_support_lead",
+                            "liability_cap": "mutual_cap",
+                        },
+                    )
+                    updated_run = dict(vs)
+                    updated_run["proposal_submitted"] = True
+                else:
+                    action = _policy_action(vs["current_observation"])
+                    updated_run = dict(vs)
+
                 obs, reward, done, info, state = web_manager.step_session(vs["session_id"], action)
                 triggered = _compute_triggered_stakeholders(info, prev_info)
-                updated = _record_step(vs, action, obs, reward, done, info, state.model_dump())
+                updated = _record_step(updated_run, action, obs, reward, done, info, state.model_dump())
                 updated["triggered_stakeholders"] = triggered
                 updated["popup_index"] = 0
                 stakeholder_ids = list(updated["current_observation"].get("stakeholders", {}).keys())
@@ -804,7 +941,7 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                     lvl_simple, lvl_medium, lvl_hard,
                     gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")),
                     gr.update(),
-                    "")
+                    "", "", _build_workflow_steps(updated), "")
 
         def handle_autoplay(vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
             vs = _normalize_view_state(vs)
@@ -813,10 +950,35 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                 vs["auto_playing"] = False
                 return (vs, sr) + tuple([gr.update()] * (len(outputs) - 2))
             prev_info = vs.get("last_info", {})
-            action = _policy_action(vs["current_observation"])
+            obs_current = _coerce_observation(vs["current_observation"])
+            deal_stage = obs_current.deal_stage
+            active_blockers = obs_current.active_blockers or []
+            real_blockers = [b for b in active_blockers if b != "missing_final_proposal"]
+            proposal_submitted = vs.get("proposal_submitted", False)
+
+            if deal_stage == "final_approval" and not real_blockers and not proposal_submitted:
+                action = DealRoomAction(
+                    action_type="group_proposal",
+                    target="all",
+                    target_ids=list(obs_current.stakeholders.keys()),
+                    message="I believe we have enough alignment to move to final approval on concrete, reviewable terms.",
+                    proposed_terms={
+                        "price": 180000,
+                        "timeline_weeks": 14,
+                        "security_commitments": ["gdpr", "audit rights"],
+                        "support_level": "named_support_lead",
+                        "liability_cap": "mutual_cap",
+                    },
+                )
+                updated_run = dict(vs)
+                updated_run["proposal_submitted"] = True
+            else:
+                action = _policy_action(vs["current_observation"])
+                updated_run = dict(vs)
+
             obs, reward, done, info, state = web_manager.step_session(vs["session_id"], action)
             triggered = _compute_triggered_stakeholders(info, prev_info)
-            updated = _record_step(vs, action, obs, reward, done, info, state.model_dump())
+            updated = _record_step(updated_run, action, obs, reward, done, info, state.model_dump())
             updated["triggered_stakeholders"] = triggered
             stakeholder_ids = list(updated["current_observation"].get("stakeholders", {}).keys())
             updated["popup_queue"] = [{"stakeholder_id": s} for s in stakeholder_ids]
@@ -826,12 +988,9 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
             return (updated, sr,
                     _build_stakeholder_list(updated, stakeholder_ids), _build_detail_panel(updated), _build_message_panel(updated),
                     gr.update(visible=False), gr.update(visible=True), gr.update(visible=True),
-                    _build_hint(updated), _build_triggered_popup(updated),
-                    _build_score_panel(updated), _build_how_it_works(), _build_deal_close_popup(updated),
-                    lvl_simple, lvl_medium, lvl_hard,
                     gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")),
                     gr.update(),
-                    "")
+                    "", "", _build_workflow_steps(vs), "")
 
         def handle_level_select(level: str, vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
             vs = _normalize_view_state(vs)
@@ -848,7 +1007,7 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                     lvl_simple, lvl_medium, lvl_hard,
                     gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")),
                     gr.update(value=""),
-                    "")
+                    "", "", _build_workflow_steps(updated), "")
 
         def handle_chip_select(chip_text: str, vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
             vs = _normalize_view_state(vs)
@@ -865,13 +1024,33 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
                     gr.update(), gr.update(), gr.update(),
                     gr.update(choices=stakeholder_ids, value=updated.get("selected_stakeholder", "")),
                     gr.update(value=chip_text),
-                    "")
+                    "", "", _build_workflow_steps(updated), "")
+
+        def handle_detail_reselect(vs: Dict[str, Any], sr: List[Dict[str, Any]]) -> Tuple[Any, ...]:
+            vs = _normalize_view_state(vs)
+            sr = _normalize_saved_runs(sr)
+            stakeholder_ids = list((vs.get("current_observation") or {}).get("stakeholders", {}).keys())
+            return (vs, sr,
+                    _build_stakeholder_list(vs, stakeholder_ids) if stakeholder_ids else "", _build_detail_panel(vs), _build_message_panel(vs),
+                    gr.update(), gr.update(), gr.update(),
+                    _build_hint(vs), _build_triggered_popup(vs),
+                    _build_score_panel(vs), _build_how_it_works(), _build_deal_close_popup(vs),
+                    gr.update(), gr.update(), gr.update(),
+                    gr.update(choices=stakeholder_ids, value=vs.get("selected_stakeholder", "")),
+                    gr.update(value=vs.get("message_text", "")),
+                    "", "", _build_workflow_steps(vs), "")
 
         start_btn.click(fn=handle_start, inputs=[gr.State("simple"), view_state, saved_runs], outputs=outputs)
 
         stakeholder_dropdown.change(
             fn=handle_stakeholder_click,
             inputs=[stakeholder_dropdown, view_state, saved_runs],
+            outputs=outputs
+        )
+
+        stakeholder_hidden_input.change(
+            fn=handle_stakeholder_click,
+            inputs=[stakeholder_hidden_input, view_state, saved_runs],
             outputs=outputs
         )
 
@@ -882,9 +1061,15 @@ def build_clean_tab(pool: DealRoomSessionPool, metadata: EnvironmentMetadata) ->
         send_btn.click(fn=handle_send, inputs=[message_input, view_state, saved_runs], outputs=outputs)
         run_btn.click(fn=handle_run, inputs=[view_state, saved_runs], outputs=outputs)
         step_btn.click(fn=handle_run, inputs=[view_state, saved_runs], outputs=outputs)
-        chip_wrapper_html.click(
-            fn=handle_chip_select,
-            inputs=[chip_wrapper_html, view_state, saved_runs],
+        detail_click_handler.click(
+            fn=handle_detail_reselect,
+            inputs=[view_state, saved_runs],
+            outputs=outputs
+        )
+
+        stakeholders_card_html.click(
+            fn=handle_stakeholder_click,
+            inputs=[stakeholders_card_html, view_state, saved_runs],
             outputs=outputs
         )
 

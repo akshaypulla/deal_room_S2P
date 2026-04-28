@@ -272,4 +272,56 @@ Because in the room where deals go to die, the winners aren't the ones who never
 
 ---
 
+## Gradio UI
+
+The project includes a Gradio-based web interface (`server/gradio_clean.py`) for manual testing and demonstration.
+
+### Running the UI
+
+```bash
+docker build -t deal-room-s2p .
+docker run -p 7860:7860 deal-room-s2p
+```
+
+Then open http://localhost:7860/ and navigate to the "Clean" tab.
+
+### UI Features
+
+| Feature | Status |
+|---------|--------|
+| Level selection (Easy/Medium/Hard) | ✅ Working |
+| Start Round | ✅ Working |
+| Stakeholder dropdown selection | ✅ Working |
+| Stakeholder card clicks | ❌ Gradio internal state limitation |
+| Chip auto-fill on click | ✅ Working |
+| Send Response | ✅ Working |
+| Run Round | ✅ Working |
+| Deal close popup | ✅ Working |
+
+### Technical Notes
+
+- The Gradio UI uses JavaScript event delegation via `demo.load(js=...)` for handling chip clicks and stakeholder selection
+- Chips auto-fill the message textbox when clicked
+- The stakeholder dropdown is the recommended way to select stakeholders (card clicks work via event listeners but Gradio's internal state may not update)
+- Full UI workflow testing is documented with screenshots in `ui_test_screenshots/`
+
+---
+
+## Docker Deployment
+
+The containerized version is available at:
+
+**Hugging Face Spaces**: `akshaypulla/deal-room-s2p`
+**Docker Hub**: `akshaypulla/deal-room-s2p`
+
+```bash
+# Pull and run
+docker run -p 7860:7860 ghcr.io/akshaypulla/deal-room-s2p:latest
+
+# Or use Docker Hub
+docker run -p 7860:7860 akshaypulla/deal-room-s2p:latest
+```
+
+---
+
 _DealRoom S2P V3 is an OpenEnv-compatible RL environment for enterprise B2B negotiation. The environment is designed to train an LLM (not a neural network agent). Explore the code, try the Colab notebook, and dig into the research on [GitHub](https://github.com/akshaypulla/deal_room_S2P)._

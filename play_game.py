@@ -73,7 +73,7 @@ def submit_proposal(session_id: str, stakeholders: list) -> dict:
     }
     return api_step(session_id, action)
 
-def play_level_api(level: str, max_steps: int = 20) -> list:
+def play_level_api(level: str, max_steps: int = 25) -> list:
     """Play through a level using documented walkthrough sequence."""
     task_id = level
 
@@ -86,169 +86,70 @@ def play_level_api(level: str, max_steps: int = 20) -> list:
 
     print(f"Started {level} with session {session_id}")
 
-    # Define the walkthrough sequence based on walkthrough_data.py
-    # For aligned: Finance -> Legal -> Operations -> Procurement -> group_proposal
-    # For conflicted: similar but with hostile dynamics
-    # For hostile_acquisition: different starting conditions
-
     results = []
     step = 0
 
-    # Step 1: Initial group proposal to start the negotiation
-    action = {
-        "action_type": "group_proposal",
-        "target": "all",
-        "target_ids": ["Legal", "Finance", "TechLead", "Procurement", "Operations", "ExecSponsor"],
-        "message": "I believe we have alignment to proceed with the negotiation.",
-        "proposed_terms": {"price": 150000, "timeline_weeks": 12},
-        "metadata": {"session_id": session_id}
-    }
-    result = api_step(session_id, action)
-    results.append({
-        "level": level, "step": 1, "action": "group_proposal",
-        "reward": result.get("reward", 0), "done": result.get("done", False),
-        "stage": result.get("observation", {}).get("deal_stage", "?"),
-        "terminal_outcome": result.get("info", {}).get("terminal_outcome", "")
-    })
-    log_result(level, 1, "group_proposal", result.get("reward", 0), result.get("done", False), result.get("observation", {}).get("deal_stage", "?"))
-    if result.get("done"):
-        print(f"  -> Episode ended: {result.get('info', {}).get('terminal_outcome')}")
-        return results
+    # Walkthrough sequence
+    actions_sequence = [
+        ("group_proposal", {"action_type": "group_proposal", "target": "all", "target_ids": ["Legal", "Finance", "TechLead", "Procurement", "Operations", "ExecSponsor"], "message": "I believe we have alignment.", "proposed_terms": {"price": 150000, "timeline_weeks": 12}, "metadata": {"session_id": session_id}}),
+        ("send_document(dpa)_to_Legal", {"action_type": "send_document", "target": "Legal", "target_ids": ["Legal"], "message": "DPA", "documents": [{"type": "dpa", "specificity": "high"}], "metadata": {"session_id": session_id}}),
+        ("send_document(security_cert)_to_TechLead", {"action_type": "send_document", "target": "TechLead", "target_ids": ["TechLead"], "message": "Security cert", "documents": [{"type": "security_cert", "specificity": "high"}], "metadata": {"session_id": session_id}}),
+        ("send_document(roi_model)_to_Finance", {"action_type": "send_document", "target": "Finance", "target_ids": ["Finance"], "message": "ROI", "documents": [{"type": "roi_model", "specificity": "high"}], "metadata": {"session_id": session_id}}),
+        ("send_document(implementation_timeline)_to_Operations", {"action_type": "send_document", "target": "Operations", "target_ids": ["Operations"], "message": "Timeline", "documents": [{"type": "implementation_timeline", "specificity": "high"}], "metadata": {"session_id": session_id}}),
+        ("send_document(vendor_packet)_to_Procurement", {"action_type": "send_document", "target": "Procurement", "target_ids": ["Procurement"], "message": "Vendor packet", "documents": [{"type": "vendor_packet", "specificity": "high"}], "metadata": {"session_id": session_id}}),
+        ("group_proposal_final", {"action_type": "group_proposal", "target": "all", "target_ids": ["Legal", "Finance", "TechLead", "Procurement", "Operations", "ExecSponsor"], "message": "Ready for final approval.", "proposed_terms": {"price": 180000, "timeline_weeks": 14}, "metadata": {"session_id": session_id}}),
+    ]
 
-    # Step 2: Send DPA to Legal
-    action = {
-        "action_type": "send_document",
-        "target": "Legal",
-        "target_ids": ["Legal"],
-        "message": "Here is the DPA with GDPR-aligned privacy commitments and review-ready clauses.",
-        "documents": [{"type": "dpa", "specificity": "high"}],
-        "metadata": {"session_id": session_id}
-    }
-    result = api_step(session_id, action)
-    results.append({
-        "level": level, "step": 2, "action": "send_document(dpa)_to_Legal",
-        "reward": result.get("reward", 0), "done": result.get("done", False),
-        "stage": result.get("observation", {}).get("deal_stage", "?"),
-        "terminal_outcome": result.get("info", {}).get("terminal_outcome", "")
-    })
-    log_result(level, 2, "send_document(dpa)_to_Legal", result.get("reward", 0), result.get("done", False), result.get("observation", {}).get("deal_stage", "?"))
-    if result.get("done"):
-        print(f"  -> Episode ended: {result.get('info', {}).get('terminal_outcome')}")
-        return results
+    # Execute predefined sequence
+    for action_name, action in actions_sequence:
+        step += 1
+        result = api_step(session_id, action)
+        obs = result.get("observation", {})
+        current_stage = obs.get("deal_stage", "?") if obs else "?"
+        reward = result.get("reward", 0)
+        done = result.get("done", False)
+        terminal = result.get("info", {}).get("terminal_outcome", "")
 
-    # Step 3: Send security cert to TechLead
-    action = {
-        "action_type": "send_document",
-        "target": "TechLead",
-        "target_ids": ["TechLead"],
-        "message": "Here is our security certification and compliance documentation.",
-        "documents": [{"type": "security_cert", "specificity": "high"}],
-        "metadata": {"session_id": session_id}
-    }
-    result = api_step(session_id, action)
-    results.append({
-        "level": level, "step": 3, "action": "send_document(security_cert)_to_TechLead",
-        "reward": result.get("reward", 0), "done": result.get("done", False),
-        "stage": result.get("observation", {}).get("deal_stage", "?"),
-        "terminal_outcome": result.get("info", {}).get("terminal_outcome", "")
-    })
-    log_result(level, 3, "send_document(security_cert)_to_TechLead", result.get("reward", 0), result.get("done", False), result.get("observation", {}).get("deal_stage", "?"))
-    if result.get("done"):
-        print(f"  -> Episode ended: {result.get('info', {}).get('terminal_outcome')}")
-        return results
+        results.append({
+            "level": level, "step": step, "action": action_name,
+            "reward": reward, "done": done,
+            "stage": current_stage, "terminal_outcome": terminal
+        })
+        log_result(level, step, action_name, reward, done, current_stage)
 
-    # Step 4: Send ROI to Finance
-    action = {
-        "action_type": "send_document",
-        "target": "Finance",
-        "target_ids": ["Finance"],
-        "message": "Here is our ROI analysis with explicit payback assumptions and downside cases.",
-        "documents": [{"type": "roi_model", "specificity": "high"}],
-        "metadata": {"session_id": session_id}
-    }
-    result = api_step(session_id, action)
-    results.append({
-        "level": level, "step": 4, "action": "send_document(roi_model)_to_Finance",
-        "reward": result.get("reward", 0), "done": result.get("done", False),
-        "stage": result.get("observation", {}).get("deal_stage", "?"),
-        "terminal_outcome": result.get("info", {}).get("terminal_outcome", "")
-    })
-    log_result(level, 4, "send_document(roi_model)_to_Finance", result.get("reward", 0), result.get("done", False), result.get("observation", {}).get("deal_stage", "?"))
-    if result.get("done"):
-        print(f"  -> Episode ended: {result.get('info', {}).get('terminal_outcome')}")
-        return results
+        if done:
+            print(f"  -> Episode ended: {terminal}")
+            return results
 
-    # Step 5: Send implementation timeline to Operations
-    action = {
-        "action_type": "send_document",
-        "target": "Operations",
-        "target_ids": ["Operations"],
-        "message": "Here is our implementation timeline with milestones, owners, and delivery guardrails.",
-        "documents": [{"type": "implementation_timeline", "specificity": "high"}],
-        "metadata": {"session_id": session_id}
-    }
-    result = api_step(session_id, action)
-    results.append({
-        "level": level, "step": 5, "action": "send_document(implementation_timeline)_to_Operations",
-        "reward": result.get("reward", 0), "done": result.get("done", False),
-        "stage": result.get("observation", {}).get("deal_stage", "?"),
-        "terminal_outcome": result.get("info", {}).get("terminal_outcome", "")
-    })
-    log_result(level, 5, "send_document(implementation_timeline)_to_Operations", result.get("reward", 0), result.get("done", False), result.get("observation", {}).get("deal_stage", "?"))
-    if result.get("done"):
-        print(f"  -> Episode ended: {result.get('info', {}).get('terminal_outcome')}")
-        return results
+        # Check state after this step
+        # If we're in legal_review, we need to immediately submit proposal in next step
+        # because stage may advance to final_approval on the next action
+        if current_stage == "legal_review":
+            state = api_state(session_id)
+            offer_state = state.get("offer_state", {})
+            # If we have dpa and security but not proposal_submitted, submit now
+            if offer_state.get("has_dpa") and offer_state.get("has_security_cert") and not offer_state.get("proposal_submitted"):
+                step += 1
+                result = submit_proposal(session_id, ["Legal", "Finance", "TechLead", "Procurement", "Operations", "ExecSponsor"])
+                obs = result.get("observation", {})
+                current_stage = obs.get("deal_stage", "?") if obs else "?"
+                reward = result.get("reward", 0)
+                done = result.get("done", False)
+                terminal = result.get("info", {}).get("terminal_outcome", "")
 
-    # Step 6: Send vendor packet to Procurement
-    action = {
-        "action_type": "send_document",
-        "target": "Procurement",
-        "target_ids": ["Procurement"],
-        "message": "Here is our supplier onboarding packet including process, insurance, and vendor details.",
-        "documents": [{"type": "vendor_packet", "specificity": "high"}],
-        "metadata": {"session_id": session_id}
-    }
-    result = api_step(session_id, action)
-    results.append({
-        "level": level, "step": 6, "action": "send_document(vendor_packet)_to_Procurement",
-        "reward": result.get("reward", 0), "done": result.get("done", False),
-        "stage": result.get("observation", {}).get("deal_stage", "?"),
-        "terminal_outcome": result.get("info", {}).get("terminal_outcome", "")
-    })
-    log_result(level, 6, "send_document(vendor_packet)_to_Procurement", result.get("reward", 0), result.get("done", False), result.get("observation", {}).get("deal_stage", "?"))
-    if result.get("done"):
-        print(f"  -> Episode ended: {result.get('info', {}).get('terminal_outcome')}")
-        return results
+                results.append({
+                    "level": level, "step": step, "action": "submit_proposal",
+                    "reward": reward, "done": done,
+                    "stage": current_stage, "terminal_outcome": terminal
+                })
+                log_result(level, step, "submit_proposal", reward, done, current_stage)
 
-    # Step 7: Final group proposal
-    action = {
-        "action_type": "group_proposal",
-        "target": "all",
-        "target_ids": ["Legal", "Finance", "TechLead", "Procurement", "Operations", "ExecSponsor"],
-        "message": "We have addressed all requirements. Ready for final approval on concrete, reviewable terms.",
-        "proposed_terms": {
-            "price": 180000,
-            "timeline_weeks": 14,
-            "security_commitments": ["gdpr", "audit rights"],
-            "support_level": "named_support_lead",
-            "liability_cap": "mutual_cap",
-        },
-        "metadata": {"session_id": session_id}
-    }
-    result = api_step(session_id, action)
-    results.append({
-        "level": level, "step": 7, "action": "group_proposal_final",
-        "reward": result.get("reward", 0), "done": result.get("done", False),
-        "stage": result.get("observation", {}).get("deal_stage", "?"),
-        "terminal_outcome": result.get("info", {}).get("terminal_outcome", "")
-    })
-    log_result(level, 7, "group_proposal_final", result.get("reward", 0), result.get("done", False), result.get("observation", {}).get("deal_stage", "?"))
-    if result.get("done"):
-        print(f"  -> Episode ended: {result.get('info', {}).get('terminal_outcome')}")
-        return results
+                if done:
+                    print(f"  -> Episode ended: {terminal}")
+                    return results
 
-    # Continue with auto actions until done or max steps
-    for extra_step in range(8, max_steps + 1):
+    # Continue with auto-actions until done or max steps
+    for extra_step in range(step + 1, max_steps + 1):
         # Check current state
         state = api_state(session_id)
         deal_stage = state.get("deal_stage", "unknown")
@@ -257,28 +158,35 @@ def play_level_api(level: str, max_steps: int = 20) -> list:
 
         # If in final_approval stage and proposal not submitted, submit it
         if deal_stage == "final_approval" and not proposal_submitted:
+            action_name = "submit_proposal"
             result = submit_proposal(session_id, ["Legal", "Finance", "TechLead", "Procurement", "Operations", "ExecSponsor"])
         else:
-            # Otherwise send direct message
+            # Otherwise send direct message to try to close
+            action_name = "direct_message_to_close"
             action = {
                 "action_type": "direct_message",
                 "target": "ExecSponsor",
                 "target_ids": ["ExecSponsor"],
-                "message": "Let me know if there's anything else you need before we proceed.",
+                "message": "Please confirm final approval so we can close the deal.",
                 "metadata": {"session_id": session_id}
             }
             result = api_step(session_id, action)
 
-        results.append({
-            "level": level, "step": extra_step, "action": "auto_action",
-            "reward": result.get("reward", 0), "done": result.get("done", False),
-            "stage": result.get("observation", {}).get("deal_stage", "?"),
-            "terminal_outcome": result.get("info", {}).get("terminal_outcome", "")
-        })
-        log_result(level, extra_step, "auto_action", result.get("reward", 0), result.get("done", False), result.get("observation", {}).get("deal_stage", "?"))
+        obs = result.get("observation", {})
+        current_stage = obs.get("deal_stage", "?") if obs else "?"
+        reward = result.get("reward", 0)
+        done = result.get("done", False)
+        terminal = result.get("info", {}).get("terminal_outcome", "")
 
-        if result.get("done"):
-            print(f"  -> Episode ended: {result.get('info', {}).get('terminal_outcome')}")
+        results.append({
+            "level": level, "step": extra_step, "action": action_name,
+            "reward": reward, "done": done,
+            "stage": current_stage, "terminal_outcome": terminal
+        })
+        log_result(level, extra_step, action_name, reward, done, current_stage)
+
+        if done:
+            print(f"  -> Episode ended: {terminal}")
             break
 
     return results
@@ -318,7 +226,7 @@ def main():
     all_results = []
 
     print("=" * 60)
-    print("DealRoom S2P - Playing All Levels (Documented Walkthrough)")
+    print("DealRoom S2P - Playing All Levels (Fixed)")
     print("=" * 60)
 
     levels = ["aligned", "conflicted", "hostile_acquisition"]
@@ -328,7 +236,7 @@ def main():
         print(f"Playing {level.upper()} level")
         print(f"{'='*40}")
 
-        results = play_level_api(level, max_steps=20)
+        results = play_level_api(level, max_steps=25)
         all_results.extend(results)
 
         time.sleep(1)

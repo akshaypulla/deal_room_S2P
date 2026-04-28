@@ -1,60 +1,46 @@
-# DealRoom S2P - Game Play Results
+# DealRoom S2P Game Results
 
-## Test Date: 2026-04-27 22:07:30
+## Summary Table
 
-## ALIGNED Level
+| Level | Rounds | Final Reward | Terminal Outcome |
+|-------|--------|--------------|----------------|
+| Easy | 8 | 0.1612 | hard_veto::missing_final_proposal |
+| Medium | 2 | -0.4297 | soft_veto_by_Legal |
+| Hard | 2 | -0.3166 | soft_veto_by_Legal |
 
-| Step | Action | Reward | Done | Stage | Terminal Outcome |
-|------|--------|--------|------|-------|------------------|
-| 1 | group_proposal | -0.0848 | False | evaluation |  |
-| 2 | send_document(dpa)_to_Legal | 0.5693 | False | evaluation |  |
-| 3 | send_document(security_cert)_to_TechLead | 0.7541 | False | negotiation |  |
-| 4 | send_document(roi_model)_to_Finance | 0.0660 | False | negotiation |  |
-| 5 | send_document(implementation_timeline)_to_Operations | -0.0427 | False | negotiation |  |
-| 6 | send_document(vendor_packet)_to_Procurement | 0.4472 | False | legal_review |  |
-| 7 | group_proposal_final | 0.0000 | False | ? |  |
-| 8 | auto_action | 0.0000 | False | ? |  |
-| 9 | auto_action | 0.0000 | False | ? |  |
-| 10 | auto_action | 0.0000 | False | ? |  |
-| 11 | auto_action | 0.0000 | False | ? |  |
-| 12 | auto_action | 0.0000 | False | ? |  |
-| 13 | auto_action | 0.0000 | False | ? |  |
-| 14 | auto_action | 0.0000 | False | ? |  |
-| 15 | auto_action | 0.0000 | False | ? |  |
-| 16 | auto_action | 0.0000 | False | ? |  |
-| 17 | auto_action | 0.0000 | False | ? |  |
-| 18 | auto_action | 0.0000 | False | ? |  |
-| 19 | auto_action | 0.0000 | False | ? |  |
-| 20 | auto_action | 0.0000 | False | ? |  |
+## Trajectories
 
-**Final Score**: 0.0000
-**Terminal Outcome**: 
+### Easy (aligned) - Seed 42
 
-## CONFLICTED Level
+| Step | Action | Target | Reward | Cumulative | Stage | Blocker(s) |
+|------|--------|-------|--------|------------|-------|------------|
+| 1 | send_document | Finance | 0.2711 | 0.2711 | evaluation | Legal |
+| 2 | send_document | Legal | 0.1239 | 0.3950 | evaluation | - |
+| 3 | send_document | TechLead | 0.6635 | 1.0586 | negotiation | - |
+| 4 | send_document | Procurement | -0.0528 | 1.0057 | negotiation | Legal |
+| 5 | send_document | Operations | -0.2426 | 0.7631 | negotiation | - |
+| 6 | direct_message | all | 0.4432 | 1.2063 | legal_review | - |
+| 7 | direct_message | Legal | -0.0533 | 1.1531 | legal_review | - |
+| 8 | direct_message | Legal | -0.9919 | 0.1612 | final_approval | missing_final_proposal |
 
-| Step | Action | Reward | Done | Stage | Terminal Outcome |
-|------|--------|--------|------|-------|------------------|
-| 1 | group_proposal | -0.0857 | False | evaluation |  |
-| 2 | send_document(dpa)_to_Legal | -0.3012 | True | evaluation | soft_veto_by_Legal |
+### Medium (conflicted) - Seed 64
 
-**Final Score**: -0.3012
-**Terminal Outcome**: soft_veto_by_Legal
+| Step | Action | Target | Reward | Cumulative | Stage | Blocker(s) |
+|------|--------|-------|--------|------------|-------|------------|
+| 1 | send_document | Finance | 0.3750 | 0.3750 | evaluation | Finance, Legal |
+| 2 | send_document | Legal | -0.8047 | -0.4297 | evaluation | Finance, Legal |
 
-## HOSTILE_ACQUISITION Level
+### Hard (hostile_acquisition) - Seed 42
 
-| Step | Action | Reward | Done | Stage | Terminal Outcome |
-|------|--------|--------|------|-------|------------------|
-| 1 | group_proposal | -0.0813 | False | evaluation |  |
-| 2 | send_document(dpa)_to_Legal | -0.2120 | True | evaluation | soft_veto_by_Legal |
-
-**Final Score**: -0.2120
-**Terminal Outcome**: soft_veto_by_Legal
+| Step | Action | Target | Reward | Cumulative | Stage | Blocker(s) |
+|------|--------|-------|--------|------------|-------|------------|
+| 1 | send_document | Finance | 0.4903 | 0.4903 | evaluation | Finance, Legal |
+| 2 | send_document | Legal | -0.8069 | -0.3166 | evaluation | Finance, Legal |
 
 
-## Summary
+## Notes
 
-| Level | Final Reward | Outcome |
-|-------|--------------|--------|
-| aligned | 0.0000 |  |
-| conflicted | -0.3012 | soft_veto_by_Legal |
-| hostile_acquisition | -0.2120 | soft_veto_by_Legal |
+- **Easy (aligned)**: All stakeholders start aligned. Send required documents then submit proposal.
+- **Medium (conflicted)**: Finance and Legal have conflicting interests. CVaR risk preferences may trigger early veto.
+- **Hard (hostile_acquisition)**: Post-acquisition scenario with high risk. CVaR vetoes are expected.
+- **soft_veto_by_Legal**: Legal's CVaR risk preference triggers a veto when engagement drops - this is expected behavior for conflicted/hostile tasks.
